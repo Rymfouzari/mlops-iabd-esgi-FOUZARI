@@ -47,6 +47,7 @@ mlops-iabd-esgi/
   README.md                 ce fichier
   .gitignore                exclusions (secrets, caches, artefacts ML)
   slides/                   supports de cours (un .pptx par seance) + syllabus
+  tp/                       enonces des TP (un .md par seance, marqueurs TODO)
   todo/                     squelette du projet a completer (package mlproject)
     README.md               demarche pedagogique et feuille de route detaillee
     Makefile                cibles d'installation (uv), les autres a completer
