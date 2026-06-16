@@ -71,3 +71,23 @@ Thumbs.db
 
 backup/
 confusion.png
+
+# Environnements et caches
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Artefacts locaux
+mlruns/
+mlflow.db
+confusion.png
+models/*.joblib
+
+# Backup local du sujet
+backup/
+
+# OS / IDE
+.DS_Store
+.vscode/
