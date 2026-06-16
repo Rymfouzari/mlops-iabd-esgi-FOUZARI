@@ -12,12 +12,7 @@ from sklearn.pipeline import Pipeline
 from mlproject.config import RANDOM_STATE
 from mlproject.data import load_data, split
 from mlproject.features import build_preprocessor
-from mlproject.tracking import (
-    log_metrics,
-    log_model,
-    log_params,
-    setup_mlflow,
-)
+from mlproject.tracking import log_metrics, log_model, log_params, setup_mlflow
 
 warnings.filterwarnings("ignore", module="mlflow")
 
@@ -77,6 +72,7 @@ def train_all() -> None:
         }
 
         with mlflow.start_run(run_name=name):
+            log_params({"model": name})
             log_params(search.best_params_)
             log_metrics(metrics)
             log_model(best, name="model")
