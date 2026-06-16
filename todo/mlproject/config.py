@@ -64,3 +64,4 @@ RANDOM_STATE = 42
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
 MLFLOW_EXPERIMENT = os.getenv("MLFLOW_EXPERIMENT", "breast-cancer-baseline")
 MODEL_NAME = os.getenv("MODEL_NAME", "breast-cancer-classifier")
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
