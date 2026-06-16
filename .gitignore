@@ -68,3 +68,6 @@ standalone_admin_password.txt
 Thumbs.db
 .idea/
 *.swp
+
+backup/
+confusion.png

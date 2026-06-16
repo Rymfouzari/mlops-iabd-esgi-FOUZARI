@@ -1405,7 +1405,7 @@ wheels = [
 ]
 
 [[package]]
-name = "mlops-churn"
+name = "mlops-breast-cancer-classification"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
