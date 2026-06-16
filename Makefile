@@ -34,7 +34,7 @@ RESET  := $(shell printf '\033[0m')
 
 .PHONY: help \
         check-uv check-venv venv-create install sync deps-sync lock reset-env doctor \
-        data train train-models train-optuna mlflow api frontend \
+        data train train-models train-optuna mlflow api predict-client frontend \
         docker-build docker-run docker-up docker-down \
         lint format type test check
 
@@ -101,24 +101,29 @@ doctor: check-uv check-venv ## Diagnostique l'environnement de travail
 # ==============================================================================
 
 data: ## Verifie que le jeu de donnees est present dans data/
-	@test -f ../data/breast_cancer.csv || { \
-		echo "$(RED)[ERREUR] Dataset manquant : ../data/breast_cancer.csv$(RESET)"; \
+	@test -f data/breast_cancer.csv || { \
+		echo "$(RED)[ERREUR] Dataset manquant : data/breast_cancer.csv$(RESET)"; \
 		exit 1; \
 	}
-	@echo "$(GREEN)[OK] Dataset trouve : ../data/breast_cancer.csv$(RESET)"
+	@echo "$(GREEN)[OK] Dataset trouve : data/breast_cancer.csv$(RESET)"
 
-train:
-	PYTHONPATH=. $(PYTHON) -m mlproject.train --c $(C) --max-iter $(MAX_ITER)
+train: ## Entraine la baseline LogisticRegression
+	PYTHONPATH=todo $(PYTHON) -m mlproject.train --c $(C) --max-iter $(MAX_ITER)
 
-train-models:
-	PYTHONPATH=. $(PYTHON) -m mlproject.train_models
+train-models: ## Compare RandomForest / XGBoost / LightGBM avec GridSearchCV
+	PYTHONPATH=todo $(PYTHON) -m mlproject.train_models
 
-train-optuna:
-	PYTHONPATH=. $(PYTHON) -m mlproject.train_optuna --n-trials $(N_TRIALS) --cv $(CV)
+train-optuna: ## Optimise RandomForest / XGBoost / LightGBM avec Optuna
+	PYTHONPATH=todo $(PYTHON) -m mlproject.train_optuna --n-trials $(N_TRIALS) --cv $(CV)
 
-mlflow:
-	$(RUN) mlflow server --host 127.0.0.1 --port $(MLFLOW_PORT) --backend-store-uri sqlite:///../mlflow.db --default-artifact-root ../mlruns
+mlflow: ## Demarre MLflow localement
+	$(RUN) mlflow server --host 127.0.0.1 --port $(MLFLOW_PORT) --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns
 
+api: ## Lance l'API FastAPI en local
+	PYTHONPATH=todo $(RUN) uvicorn mlproject.api:app --reload --host $(API_HOST) --port $(API_PORT)
+
+predict-client: ## Teste l'API avec quelques exemples du dataset
+	PYTHONPATH=todo $(PYTHON) todo/scripts/predict_client.py
 # ==============================================================================
 # Docker  [A COMPLETER]
 # ==============================================================================
@@ -137,19 +142,19 @@ docker-down: ## Arrete et supprime les conteneurs (conserve les volumes)
 
 
 # ==============================================================================
-# Qualite  [A COMPLETER]
+# Qualite
 # ==============================================================================
 
 lint: ## Verifie le style (ruff)
-	# TODO : $(RUN) ruff check mlproject
+	PYTHONPATH=todo $(RUN) ruff check todo/mlproject tests todo/scripts
 
 format: ## Formate le code (ruff)
-	# TODO : $(RUN) ruff format mlproject
+	PYTHONPATH=todo $(RUN) ruff format todo/mlproject tests todo/scripts
 
 type: ## Verifie les types (mypy)
-	# TODO : $(RUN) mypy mlproject
+	PYTHONPATH=todo $(RUN) mypy todo/mlproject
 
 test: ## Lance les tests (pytest)
-	# TODO : $(RUN) pytest
+	PYTHONPATH=todo $(RUN) pytest
 
 check: lint type test ## Workflow qualite complet (lint + types + tests)
