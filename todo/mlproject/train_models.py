@@ -3,16 +3,21 @@ from __future__ import annotations
 import warnings
 
 import mlflow
-import mlflow.sklearn
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 
-from mlproject.config import MLFLOW_EXPERIMENT, MLFLOW_TRACKING_URI, RANDOM_STATE
+from mlproject.config import RANDOM_STATE
 from mlproject.data import load_data, split
 from mlproject.features import build_preprocessor
+from mlproject.tracking import (
+    log_metrics,
+    log_model,
+    log_params,
+    setup_mlflow,
+)
 
 warnings.filterwarnings("ignore", module="mlflow")
 
@@ -43,8 +48,7 @@ def train_all() -> None:
     df = load_data()
     x_train, x_test, y_train, y_test = split(df)
 
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-    mlflow.set_experiment(MLFLOW_EXPERIMENT)
+    setup_mlflow()
 
     for name, (estimator, param_grid) in MODELS.items():
         pipeline = Pipeline(
@@ -73,9 +77,9 @@ def train_all() -> None:
         }
 
         with mlflow.start_run(run_name=name):
-            mlflow.log_params(search.best_params_)
-            mlflow.log_metrics(metrics)
-            mlflow.sklearn.log_model(best, name="model")
+            log_params(search.best_params_)
+            log_metrics(metrics)
+            log_model(best, name="model")
 
         print(
             f"{name:20s} -> "
