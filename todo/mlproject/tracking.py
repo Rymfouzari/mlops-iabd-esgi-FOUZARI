@@ -5,6 +5,7 @@ from typing import Any
 
 import mlflow
 import mlflow.sklearn
+import pandas as pd
 
 from mlproject.config import MLFLOW_EXPERIMENT, MLFLOW_TRACKING_URI
 
@@ -15,26 +16,28 @@ def setup_mlflow() -> None:
     mlflow.set_experiment(MLFLOW_EXPERIMENT)
 
 
-def start_run(run_name: str):
-    """Demarre un run MLflow."""
-    return mlflow.start_run(run_name=run_name)
+def log_dataset(df: pd.DataFrame, context: str = "training") -> None:
+    """Loggue des informations simples sur le dataset utilise."""
+    mlflow.log_param(f"{context}_rows", df.shape[0])
+    mlflow.log_param(f"{context}_columns", df.shape[1])
+    mlflow.log_param(f"{context}_missing_values", int(df.isna().sum().sum()))
 
 
 def log_params(params: dict[str, Any]) -> None:
-    """Enregistre les hyperparametres."""
+    """Loggue les parametres d'un run MLflow."""
     mlflow.log_params(params)
 
 
 def log_metrics(metrics: dict[str, float]) -> None:
-    """Enregistre les metriques."""
+    """Loggue les metriques d'un run MLflow."""
     mlflow.log_metrics(metrics)
 
 
 def log_model(model: Any, name: str = "model") -> None:
-    """Enregistre un modele scikit-learn."""
+    """Loggue un modele scikit-learn dans MLflow."""
     mlflow.sklearn.log_model(model, name=name)
 
 
 def log_artifact(path: str) -> None:
-    """Enregistre un artefact local."""
+    """Loggue un artefact local dans MLflow."""
     mlflow.log_artifact(path)

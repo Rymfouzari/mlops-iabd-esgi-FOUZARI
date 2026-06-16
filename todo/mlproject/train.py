@@ -22,6 +22,7 @@ from mlproject.data import load_data, split
 from mlproject.features import build_preprocessor
 from mlproject.tracking import (
     log_artifact,
+    log_dataset,
     log_metrics,
     log_model,
     log_params,
@@ -45,6 +46,8 @@ def train(c: float = 1.0, max_iter: int = 1000) -> dict:
     setup_mlflow()
 
     with mlflow.start_run(run_name=f"logreg-c{c}"):
+        log_dataset(df, context="training")
+
         model = build_model(c=c, max_iter=max_iter)
         model.fit(x_train, y_train)
 
