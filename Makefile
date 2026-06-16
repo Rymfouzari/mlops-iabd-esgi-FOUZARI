@@ -107,16 +107,16 @@ data: ## Verifie que le jeu de donnees est present dans data/
 	}
 	@echo "$(GREEN)[OK] Dataset trouve : ../data/breast_cancer.csv$(RESET)"
 
-train: ## Entraine la baseline LogisticRegression -> models/model.joblib (C=.. MAX_ITER=..)
+train:
 	PYTHONPATH=. $(PYTHON) -m mlproject.train --c $(C) --max-iter $(MAX_ITER)
 
-train-models: ## Compare LogisticRegression / RandomForest / GradientBoosting avec GridSearchCV
+train-models:
 	PYTHONPATH=. $(PYTHON) -m mlproject.train_models
 
-train-optuna: ## Optimise les hyperparametres avec Optuna (S6)
+train-optuna:
 	PYTHONPATH=. $(PYTHON) -m mlproject.train_optuna --n-trials $(N_TRIALS) --cv $(CV)
 
-mlflow: ## Demarre le serveur MLflow local
+mlflow:
 	$(RUN) mlflow server --host 127.0.0.1 --port $(MLFLOW_PORT) --backend-store-uri sqlite:///../mlflow.db --default-artifact-root ../mlruns
 
 # ==============================================================================
