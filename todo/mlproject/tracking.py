@@ -22,7 +22,7 @@ def log_dataset(df: pd.DataFrame, context: str = "training") -> None:
     mlflow.log_param(f"{context}_columns", df.shape[1])
     mlflow.log_param(f"{context}_missing_values", int(df.isna().sum().sum()))
 
-    dataset = mlflow.data.from_pandas(
+    dataset = mlflow.data.from_pandas(# type: ignore[attr-defined]
         df,
         name="breast_cancer",
     )
