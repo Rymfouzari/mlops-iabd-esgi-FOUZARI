@@ -1,76 +1,48 @@
-# Projet de classification binaire - Breast Cancer Wisconsin
+# Projet MLOps – Classification du cancer du sein (Breast Cancer Wisconsin)
 
-## Objectif
+## Problématique
 
-L'objectif de ce projet est de développer un modèle de classification binaire capable de prédire si une tumeur est maligne ou bénigne à partir de mesures numériques extraites d'images médicales.
+L'objectif du projet est de mettre en œuvre une chaîne MLOps complète sur un problème de classification binaire : prédire si une tumeur est maligne ou bénigne à partir de caractéristiques extraites d'images médicales.
 
-La classe positive (`1`) correspond à une tumeur maligne, tandis que la classe négative (`0`) correspond à une tumeur bénigne.
+Au-delà de la performance prédictive, le projet vise à appliquer les différentes briques étudiées durant le module :
 
----
-
-## Dataset
-
-Le dataset utilisé est le **Breast Cancer Wisconsin Dataset**, disponible dans la bibliothèque scikit-learn.
-
-### Caractéristiques principales
-
-* 569 observations
-* 30 variables numériques
-* Classification binaire
-
-### Variable cible
-
-* 1 : tumeur maligne
-* 0 : tumeur bénigne
-
----
-
-## Justification du choix
-
-Ce dataset a été choisi car il constitue un problème de classification binaire clair et bien documenté.
-
-Les variables sont exclusivement numériques, ce qui simplifie la mise en place du pipeline de prétraitement et permet de se concentrer sur les différentes étapes du cycle de vie d'un projet MLOps :
-
-* préparation des données ;
-* entraînement ;
-* suivi des expériences ;
+* reproductibilité ;
+* suivi des expérimentations ;
 * comparaison de modèles ;
-* déploiement futur.
-
-Le contexte médical rend également les résultats faciles à interpréter.
-
----
-
-## TP0 - Configuration du projet
-
-Les fichiers suivants ont été adaptés pour connecter le projet au dataset choisi :
-
-### config.py
-
-Définition :
-
-* du chemin du dataset ;
-* de la variable cible ;
-* des variables numériques ;
-* de l'expérience MLflow ;
-* du nom du modèle.
-
-### data.py
-
-Chargement du dataset et séparation des données en ensembles d'entraînement et de test.
-
-### features.py
-
-Construction du pipeline de prétraitement :
-
-* standardisation des variables numériques avec `StandardScaler` ;
-* gestion des variables catégorielles via `OneHotEncoder`.
+* optimisation automatique d'hyperparamètres ;
+* gestion du cycle de vie des modèles.
 
 ---
 
-## Baseline - Régression Logistique
+## Choix du dataset
 
-Une première baseline a été construite à l'aide d'une régression logistique.
+Le dataset Breast Cancer Wisconsin a été retenu pour plusieurs raisons :
+
+* problème de classification binaire clairement défini ;
+* taille raisonnable permettant des expérimentations rapides ;
+* variables exclusivement numériques ;
+* forte utilisation dans la littérature, facilitant l'interprétation des résultats.
+
+Le jeu de données contient :
+
+* 569 observations ;
+* 30 variables descriptives ;
+* une cible binaire (maligne / bénigne).
+
+Ce choix nous a permis de concentrer le travail sur les aspects MLOps plutôt que sur des problématiques complexes de nettoyage de données.
+
+---
+
+## Construction de la baseline
+
+Une première baseline a été développée à l'aide d'une régression logistique intégrée dans un pipeline scikit-learn.
+
+Le pipeline comprend :
+
+* prétraitement automatique des variables ;
+* standardisation des données ;
+* entraînement du modèle ;
+* sauvegarde du modèle entraîné.
 
 ### Résultats
 
@@ -81,73 +53,88 @@ Une première baseline a été construite à l'aide d'une régression logistique
 
 ### Analyse
 
-Le modèle obtient d'excellentes performances sur le jeu de test.
+La baseline atteint déjà des performances très élevées. Le ROC-AUC proche de 1 indique que les deux classes sont fortement séparables dans l'espace des caractéristiques.
 
-Le ROC-AUC proche de 1 indique une très bonne capacité à distinguer les tumeurs malignes des tumeurs bénignes.
-
----
-
-## TP5 - Suivi des expériences avec MLflow
-
-Le projet a été instrumenté avec MLflow afin de :
-
-* enregistrer les paramètres d'entraînement ;
-* enregistrer les métriques ;
-* sauvegarder les modèles ;
-* suivre les expériences réalisées ;
-* comparer plusieurs exécutions.
-
-Un module dédié `tracking.py` centralise les fonctionnalités de suivi.
-
-Les informations suivantes sont automatiquement enregistrées :
-
-* paramètres ;
-* métriques ;
-* modèle entraîné ;
-* matrice de confusion ;
-* informations sur le dataset utilisé.
+Cette observation suggère que les gains obtenus par des modèles plus complexes risquent d'être limités.
 
 ---
 
-## Comparaison de modèles
+## Mise en place du suivi des expériences
 
-Une comparaison de plusieurs modèles a été réalisée à l'aide de `GridSearchCV`.
+Le suivi des expériences a été réalisé avec MLflow.
 
-### Modèles évalués
+Un module dédié (`tracking.py`) a été développé afin de centraliser :
 
-* Logistic Regression
-* Random Forest
-* Gradient Boosting
+* la configuration du serveur MLflow ;
+* l'enregistrement des paramètres ;
+* l'enregistrement des métriques ;
+* le suivi des datasets ;
+* l'enregistrement des modèles ;
+* la sauvegarde des artefacts.
+
+Cette centralisation permet de réutiliser les mêmes mécanismes de suivi dans tous les scripts d'entraînement.
+
+---
+
+## Comparaison de plusieurs familles de modèles
+
+Nous avons comparé trois approches :
+
+* Random Forest ;
+* XGBoost ;
+* LightGBM.
+
+Chaque modèle a été évalué à l'aide de GridSearchCV afin d'identifier les meilleurs hyperparamètres dans une grille prédéfinie.
+
+Les résultats et paramètres optimaux sont automatiquement enregistrés dans MLflow.
+
+### Observations
+
+Les trois familles de modèles obtiennent des performances très proches.
+
+Les écarts observés sont faibles, ce qui confirme que le dataset est relativement facile à classifier.
+
+Les méthodes basées sur les arbres obtiennent cependant des ROC-AUC légèrement supérieurs à la régression logistique.
+
+---
+
+## Optimisation automatique avec Optuna
+
+Afin de dépasser l'approche Grid Search, nous avons mis en place une optimisation automatique des hyperparamètres avec Optuna.
+
+Trois familles ont été optimisées :
+
+* Random Forest ;
+* XGBoost ;
+* LightGBM.
+
+Chaque étude Optuna est suivie dans MLflow :
+
+* suivi des essais (trials) ;
+* paramètres testés ;
+* score ROC-AUC obtenu ;
+* modèle final sélectionné.
+
+L'organisation des runs MLflow permet de visualiser :
+
+* l'étude globale ;
+* chaque famille de modèles ;
+* chaque essai Optuna individuellement.
 
 ### Résultats
 
-| Modèle              | F1-score | ROC-AUC |
-| ------------------- | -------: | ------: |
-| Logistic Regression |    0.964 |   0.986 |
-| Random Forest       |    0.963 |   0.993 |
-| Gradient Boosting   |    0.950 |   0.995 |
+Après optimisation, LightGBM a obtenu les meilleures performances globales.
 
-### Analyse
+### Conclusion
 
-Les trois modèles obtiennent des performances très élevées.
+L'apport principal d'Optuna n'a pas été une amélioration spectaculaire du score, mais l'automatisation de la recherche d'hyperparamètres et la traçabilité complète des expérimentations.
 
-* Logistic Regression obtient le meilleur F1-score.
-* Gradient Boosting obtient le meilleur ROC-AUC.
-* Random Forest offre le meilleur compromis global entre les deux métriques.
+Le projet dispose désormais :
 
-Le dataset apparaît donc fortement prédictif et relativement facile à séparer.
+* d'une baseline reproductible ;
+* d'un suivi MLflow complet ;
+* d'une comparaison de modèles ;
+* d'une optimisation automatique ;
+* d'un enregistrement des modèles dans le Model Registry.
 
----
-
-## Tracking des expériences
-
-Les expériences sont visualisées dans MLflow :
-
-```bash
-uv run mlflow server \
-  --host 127.0.0.1 \
-  --port 5000 \
-  --backend-store-uri sqlite:///mlflow.db \
-  --default-artifact-root ./mlruns
-```
-
+Cette architecture constitue une base solide pour les prochaines étapes du projet (API, conteneurisation, déploiement et orchestration).
