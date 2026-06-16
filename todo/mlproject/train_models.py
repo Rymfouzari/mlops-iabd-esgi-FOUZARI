@@ -3,11 +3,12 @@ from __future__ import annotations
 import warnings
 
 import mlflow
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
+from lightgbm import LGBMClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
+from xgboost import XGBClassifier
 
 from mlproject.config import RANDOM_STATE
 from mlproject.data import load_data, split
@@ -24,10 +25,6 @@ warnings.filterwarnings("ignore", module="mlflow")
 
 
 MODELS = {
-    "LogisticRegression": (
-        LogisticRegression(max_iter=1000, random_state=RANDOM_STATE),
-        {"clf__C": [0.1, 1.0, 10.0]},
-    ),
     "RandomForest": (
         RandomForestClassifier(random_state=RANDOM_STATE),
         {
@@ -35,11 +32,27 @@ MODELS = {
             "clf__max_depth": [None, 5],
         },
     ),
-    "GradientBoosting": (
-        GradientBoostingClassifier(random_state=RANDOM_STATE),
+    "XGBoost": (
+        XGBClassifier(
+            random_state=RANDOM_STATE,
+            eval_metric="logloss",
+            n_jobs=-1,
+        ),
         {
             "clf__n_estimators": [50, 100],
+            "clf__max_depth": [3, 5],
             "clf__learning_rate": [0.05, 0.1],
+        },
+    ),
+    "LightGBM": (
+        LGBMClassifier(
+            random_state=RANDOM_STATE,
+            verbose=-1,
+        ),
+        {
+            "clf__n_estimators": [50],
+            "clf__num_leaves": [31],
+            "clf__learning_rate": [0.1],
         },
     ),
 }
