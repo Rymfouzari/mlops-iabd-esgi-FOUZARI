@@ -97,30 +97,27 @@ doctor: check-uv check-venv ## Diagnostique l'environnement de travail
 
 
 # ==============================================================================
-# Pipeline ML  [A COMPLETER]
+# Pipeline ML
 # ==============================================================================
 
-data: ## Prepare/genere le jeu de donnees dans data/
-	# TODO (S0) : appeler votre script de preparation de donnees
+data: ## Verifie que le jeu de donnees est present dans data/
+	@test -f ../data/breast_cancer.csv || { \
+		echo "$(RED)[ERREUR] Dataset manquant : ../data/breast_cancer.csv$(RESET)"; \
+		exit 1; \
+	}
+	@echo "$(GREEN)[OK] Dataset trouve : ../data/breast_cancer.csv$(RESET)"
 
-train: ## Entraine la baseline -> models/model.joblib (C=.. MAX_ITER=..)
-	# TODO (S5) : $(PYTHON) -m mlproject.train --c $(C) --max-iter $(MAX_ITER)
+train: ## Entraine la baseline LogisticRegression -> models/model.joblib (C=.. MAX_ITER=..)
+	PYTHONPATH=. $(PYTHON) -m mlproject.train --c $(C) --max-iter $(MAX_ITER)
 
-train-models: ## Compare RF / XGBoost / LightGBM (GridSearchCV) + SHAP (CV=.. SCORING=..)
-	# TODO (S7) : $(PYTHON) -m mlproject.train_models --cv $(CV) --scoring $(SCORING)
+train-models: ## Compare LogisticRegression / RandomForest / GradientBoosting avec GridSearchCV
+	PYTHONPATH=. $(PYTHON) -m mlproject.train_models
 
-train-optuna: ## Optimise RF / XGBoost / LightGBM avec Optuna (N_TRIALS=.. CV=..)
-	# TODO (S6) : $(PYTHON) -m mlproject.train_optuna --n-trials $(N_TRIALS) --cv $(CV)
+train-optuna: ## Optimise les hyperparametres avec Optuna (S6)
+	PYTHONPATH=. $(PYTHON) -m mlproject.train_optuna --n-trials $(N_TRIALS) --cv $(CV)
 
-mlflow: ## Demarre le serveur MLflow (docker compose)
-	# TODO (S5) : docker compose -f docker-compose.yml up -d mlflow
-
-api: ## Lance l'API FastAPI en rechargement auto (voir API_HOST/API_PORT)
-	# TODO (S12) : $(RUN) uvicorn mlproject.api:app --reload --host $(API_HOST) --port $(API_PORT)
-
-frontend: ## Lance le frontend Streamlit (voir FRONTEND_PORT, API_URL)
-	# TODO (S14bis) : $(RUN) streamlit run frontend/app.py --server.port $(FRONTEND_PORT)
-
+mlflow: ## Demarre le serveur MLflow local
+	$(RUN) mlflow server --host 127.0.0.1 --port $(MLFLOW_PORT) --backend-store-uri sqlite:///../mlflow.db --default-artifact-root ../mlruns
 
 # ==============================================================================
 # Docker  [A COMPLETER]

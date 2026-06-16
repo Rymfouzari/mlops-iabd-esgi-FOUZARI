@@ -19,6 +19,7 @@ from mlproject.tracking import (
     log_params,
     setup_mlflow,
 )
+
 warnings.filterwarnings("ignore", module="mlflow")
 
 
@@ -50,45 +51,47 @@ def train_all() -> None:
 
     setup_mlflow()
 
-    for name, (estimator, param_grid) in MODELS.items():
-        pipeline = Pipeline(
-            steps=[
-                ("preprocessor", build_preprocessor()),
-                ("clf", estimator),
-            ]
-        )
+    with mlflow.start_run(run_name="compare-models"):
+        log_dataset(df, context="training")
 
-        search = GridSearchCV(
-            estimator=pipeline,
-            param_grid=param_grid,
-            cv=5,
-            scoring="roc_auc",
-            n_jobs=-1,
-        )
-        search.fit(x_train, y_train)
+        for name, (estimator, param_grid) in MODELS.items():
+            pipeline = Pipeline(
+                steps=[
+                    ("preprocessor", build_preprocessor()),
+                    ("clf", estimator),
+                ]
+            )
 
-        best = search.best_estimator_
-        proba = best.predict_proba(x_test)[:, 1]
-        preds = (proba >= 0.5).astype(int)
+            search = GridSearchCV(
+                estimator=pipeline,
+                param_grid=param_grid,
+                cv=5,
+                scoring="roc_auc",
+                n_jobs=-1,
+            )
+            search.fit(x_train, y_train)
 
-        metrics = {
-            "f1": float(f1_score(y_test, preds)),
-            "roc_auc": float(roc_auc_score(y_test, proba)),
-        }
+            best = search.best_estimator_
+            proba = best.predict_proba(x_test)[:, 1]
+            preds = (proba >= 0.5).astype(int)
 
-        with mlflow.start_run(run_name=name):
-            log_dataset(df, context="training")
-            log_params({"model": name})
-            log_params(search.best_params_)
-            log_metrics(metrics)
-            log_model(best, name="model")
+            metrics = {
+                "f1": float(f1_score(y_test, preds)),
+                "roc_auc": float(roc_auc_score(y_test, proba)),
+            }
 
-        print(
-            f"{name:20s} -> "
-            f"f1={metrics['f1']:.3f}  "
-            f"roc_auc={metrics['roc_auc']:.3f}  "
-            f"params={search.best_params_}"
-        )
+            with mlflow.start_run(run_name=name, nested=True):
+                log_params({"model": name})
+                log_params(search.best_params_)
+                log_metrics(metrics)
+                log_model(best, name="model")
+
+            print(
+                f"{name:20s} -> "
+                f"f1={metrics['f1']:.3f}  "
+                f"roc_auc={metrics['roc_auc']:.3f}  "
+                f"params={search.best_params_}"
+            )
 
 
 if __name__ == "__main__":

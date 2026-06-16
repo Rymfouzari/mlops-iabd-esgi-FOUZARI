@@ -17,10 +17,16 @@ def setup_mlflow() -> None:
 
 
 def log_dataset(df: pd.DataFrame, context: str = "training") -> None:
-    """Loggue des informations simples sur le dataset utilise."""
+    """Loggue le dataset dans MLflow."""
     mlflow.log_param(f"{context}_rows", df.shape[0])
     mlflow.log_param(f"{context}_columns", df.shape[1])
     mlflow.log_param(f"{context}_missing_values", int(df.isna().sum().sum()))
+
+    dataset = mlflow.data.from_pandas(
+        df,
+        name="breast_cancer",
+    )
+    mlflow.log_input(dataset, context=context)
 
 
 def log_params(params: dict[str, Any]) -> None:
