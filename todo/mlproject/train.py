@@ -9,7 +9,6 @@ import argparse
 import joblib
 import matplotlib.pyplot as plt
 import mlflow
-import mlflow.sklearn
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
@@ -18,13 +17,16 @@ from sklearn.metrics import (
 )
 from sklearn.pipeline import Pipeline
 
-from mlproject.config import (
-    MLFLOW_EXPERIMENT,
-    MLFLOW_TRACKING_URI,
-    MODEL_DIR,
-)
+from mlproject.config import MODEL_DIR
 from mlproject.data import load_data, split
 from mlproject.features import build_preprocessor
+from mlproject.tracking import (
+    log_artifact,
+    log_metrics,
+    log_model,
+    log_params,
+    setup_mlflow,
+)
 
 
 def build_model(c: float = 1.0, max_iter: int = 1000) -> Pipeline:
@@ -40,13 +42,9 @@ def train(c: float = 1.0, max_iter: int = 1000) -> dict:
     df = load_data()
     x_train, x_test, y_train, y_test = split(df)
 
-    # S5-1 / S5-2
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-    mlflow.set_experiment(MLFLOW_EXPERIMENT)
+    setup_mlflow()
 
-    # S5-3
     with mlflow.start_run(run_name=f"logreg-c{c}"):
-
         model = build_model(c=c, max_iter=max_iter)
         model.fit(x_train, y_train)
 
@@ -60,26 +58,20 @@ def train(c: float = 1.0, max_iter: int = 1000) -> dict:
 
         print(f"f1={metrics['f1']:.3f}  roc_auc={metrics['roc_auc']:.3f}")
 
-        # S5-4
-        mlflow.log_params(
+        log_params(
             {
                 "c": c,
                 "max_iter": max_iter,
                 "model": "logreg",
             }
         )
+        log_metrics(metrics)
+        log_model(model, name="model")
 
-        # S5-5
-        mlflow.log_metrics(metrics)
-
-        # S5-6
-        mlflow.sklearn.log_model(model, name="model")
-
-        # S5-7 bonus
         ConfusionMatrixDisplay.from_predictions(y_test, preds)
         plt.savefig("confusion.png", bbox_inches="tight")
         plt.close()
-        mlflow.log_artifact("confusion.png")
+        log_artifact("confusion.png")
 
         MODEL_DIR.mkdir(parents=True, exist_ok=True)
         joblib.dump(model, MODEL_DIR / "model.joblib")
