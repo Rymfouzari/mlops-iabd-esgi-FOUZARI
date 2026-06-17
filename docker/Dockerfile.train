@@ -1,0 +1,20 @@
+FROM python:3.13-slim
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+ENV PROJECT_ROOT=/app
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml ./
+COPY uv.lock ./
+
+RUN pip install --no-cache-dir .
+
+COPY todo/mlproject/ ./mlproject/
+COPY data/ ./data/
+
+CMD ["python", "-m", "mlproject.train"]
