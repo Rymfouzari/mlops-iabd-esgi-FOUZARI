@@ -14,9 +14,9 @@ VENV_DIR     := .venv
 PYTHONPATH   ?= .
 export PYTHONPATH
 API_HOST     ?= 127.0.0.1
-API_PORT     ?= 8000
+API_PORT     ?= 8001
 FRONTEND_PORT ?= 8501
-MLFLOW_PORT  := 5000
+MLFLOW_PORT  := 5001
 C            ?= 1.0
 MAX_ITER     ?= 1000
 CV           ?= 5
@@ -123,24 +123,25 @@ api: ## Lance l'API FastAPI en local
 	PYTHONPATH=todo $(RUN) uvicorn mlproject.api:app --reload --host $(API_HOST) --port $(API_PORT)
 
 predict-client: ## Teste l'API avec quelques exemples du dataset
-	PYTHONPATH=todo $(PYTHON) todo/scripts/predict_client.py
+	PYTHONPATH=todo $(PYTHON) todo/scripts/predict_client.py --url http://127.0.0.1:$(API_PORT)
+
+frontend: ## Lance le frontend Streamlit
+	API_URL=http://127.0.0.1:$(API_PORT) PYTHONPATH=todo $(RUN) streamlit run frontend/app.py --server.port $(FRONTEND_PORT)
 # ==============================================================================
-# Docker  [A COMPLETER]
+# Docker
 # ==============================================================================
 
-docker-build: ## Construit l'image d'entrainement
-	# TODO (S8) : docker build -f docker/Dockerfile.train -t mlproject-train .
+docker-build: ## Construit les images Docker train et API
+	docker compose build train api
 
-docker-run: ## Lance l'entrainement en conteneur
-	# TODO (S8) : docker run --rm -v "$(CURDIR)/../models:/app/models" mlproject-train
+docker-run: ## Lance l'entrainement en conteneur Docker
+	docker compose --profile train run --rm train
 
-docker-up: ## Demarre la stack (mlflow, api, frontend)
-	# TODO (S14) : docker compose -f docker-compose.yml up -d --build mlflow api frontend
+docker-up: ## Demarre la stack Docker MLflow + API
+	docker compose up -d mlflow api
 
-docker-down: ## Arrete et supprime les conteneurs (conserve les volumes)
-	# TODO (S14) : docker compose -f docker-compose.yml down
-
-
+docker-down: ## Arrete et supprime les conteneurs Docker
+	docker compose down --remove-orphans
 # ==============================================================================
 # Qualite
 # ==============================================================================
