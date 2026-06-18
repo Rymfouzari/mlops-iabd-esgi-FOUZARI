@@ -29,7 +29,7 @@ def task_prepare_data(**context) -> None:
 def task_train(**context) -> None:
     from mlproject.train_optuna import optimize
 
-    results = optimize(n_trials=5, cv=2, use_mlflow=False)
+    results = optimize(n_trials=5, cv=2, use_mlflow=True)
     best = results[0]
 
     context["ti"].xcom_push(key="roc_auc", value=float(best.test_roc_auc))

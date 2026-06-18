@@ -367,6 +367,14 @@ def log_family_to_mlflow(
             signature=signature,
             input_example=x_test.iloc[:5],
             registered_model_name=register_as,
+            skops_trusted_types=[
+                "numpy.dtype",
+                "xgboost.core.Booster",
+                "xgboost.sklearn.XGBClassifier",
+                "lightgbm.basic.Booster",
+                "lightgbm.sklearn.LGBMClassifier",
+                "collections.OrderedDict",
+            ],
         )
 
         # TODO (S6-7 bonus) : renommez _model_info en model_info ; si register_as
