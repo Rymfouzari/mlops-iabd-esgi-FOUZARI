@@ -1,13 +1,25 @@
-"""Frontend Streamlit pour l'API Breast Cancer Classification."""
+
+"""Frontend Streamlit pour l'API Breast Cancer Classification.
+
+Seance 14 bis - TP Streamlit
+    Interface utilisateur pour interroger l'API FastAPI /predict.
+    Lancement local :
+        API_URL=http://127.0.0.1:8001 PYTHONPATH=todo streamlit run frontend/app.py
+    En Docker Compose :
+        API_URL=http://api:8000 est injecte automatiquement.
+"""
 from __future__ import annotations
 
 import os
+from datetime import datetime
 from typing import Any
 
 import httpx
+import pandas as pd
 import streamlit as st
 
 API_URL = os.environ.get("API_URL", "http://127.0.0.1:8001")
+MLFLOW_EXTERNAL_URL = os.environ.get("MLFLOW_EXTERNAL_URL", "http://localhost:5001")
 
 DEFAULT_FEATURES: dict[str, float] = {
     "mean radius": 17.99,
@@ -51,41 +63,119 @@ def call_api(method: str, path: str, api_url: str, **kwargs: Any) -> dict[str, A
     return response.json()
 
 
+def fetch_health(api_url: str) -> dict[str, Any]:
+    """Recupere le statut de l'API."""
+    try:
+        return call_api("GET", "/health", api_url)
+    except httpx.HTTPError:
+        return {}
+
+
+def fetch_model_info(api_url: str) -> dict[str, Any]:
+    """Recupere les informations du modele charge par l'API."""
+    try:
+        return call_api("GET", "/model-info", api_url)
+    except httpx.HTTPError:
+        return {}
+
+
+def init_session_state() -> None:
+    """Initialise l'historique local des predictions."""
+    if "history" not in st.session_state:
+        st.session_state["history"] = []
+    if "last_result" not in st.session_state:
+        st.session_state["last_result"] = None
+
+
 st.set_page_config(
     page_title="Breast Cancer Classifier",
     page_icon="🧬",
     layout="wide",
 )
 
-st.title("🧬 Breast Cancer Classifier")
-st.caption("Prédiction bénigne / maligne à partir des 30 variables du dataset Wisconsin.")
+init_session_state()
 
 with st.sidebar:
-    st.header("Configuration")
+    st.markdown("## Configuration")
     api_url = st.text_input("URL de l'API", value=API_URL)
 
-    if st.button("Vérifier l'API", use_container_width=True):
-        try:
-            health = call_api("GET", "/health", api_url)
-        except httpx.HTTPError as exc:
-            st.error(f"API indisponible : {exc}")
-        else:
-            st.success(f"API opérationnelle : {health}")
+    health = fetch_health(api_url)
+    model_info = fetch_model_info(api_url)
 
-    try:
-        info = call_api("GET", "/model-info", api_url)
-    except httpx.HTTPError:
-        st.warning("Informations modèle indisponibles.")
+    if health.get("status") == "ok":
+        st.success("API operationnelle")
     else:
-        st.write("Modèle chargé :", info.get("model_exists"))
-        st.write("Nombre de variables :", info.get("n_features"))
+        st.error("API indisponible")
 
-predict_tab, info_tab, history_tab = st.tabs(
-    ["🔍 Prédiction", "ℹ️ Modèle", "🕘 Historique"]
+    st.divider()
+
+    model_exists = bool(model_info.get("model_exists", False))
+    st.metric("Modele charge", "Oui" if model_exists else "Non")
+    st.metric("Nombre de variables", model_info.get("n_features", 0))
+
+    st.divider()
+    st.link_button("Ouvrir MLflow", MLFLOW_EXTERNAL_URL, use_container_width=True)
+
+
+tab_home, tab_predict, tab_model, tab_monitoring = st.tabs(
+    ["Accueil", "Prediction", "Modele", "Monitoring"]
 )
 
-with predict_tab:
-    st.subheader("Mesures de la tumeur")
+with tab_home:
+    st.title("Breast Cancer Wisconsin - Classification binaire")
+    st.markdown(
+        """
+        Cette application expose un modele de classification binaire capable de predire
+        si une tumeur est **benigne** ou **maligne** a partir de mesures numeriques
+        extraites d'images medicales.
+
+        Le frontend Streamlit appelle une API FastAPI qui charge le modele entraine
+        depuis `models/model.joblib`.
+        """
+    )
+
+    st.divider()
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Observations", "569")
+    col2.metric("Features", "30")
+    col3.metric("Type", "Classification")
+    col4.metric("Cible", "0 / 1")
+
+    st.divider()
+
+    col_a, col_b = st.columns(2)
+
+    with col_a:
+        st.subheader("Interpretation metier")
+        st.markdown(
+            """
+            - `0` : tumeur predite comme **benigne**
+            - `1` : tumeur predite comme **maligne**
+            - la probabilite affichee correspond au risque estime de malignite
+            """
+        )
+
+    with col_b:
+        st.subheader("Stack technique")
+        st.markdown(
+            """
+            - **Tracking** : MLflow
+            - **Optimisation** : Optuna
+            - **API** : FastAPI
+            - **Frontend** : Streamlit
+            - **Conteneurisation** : Docker Compose
+            - **CI/CD** : GitHub Actions
+            """
+        )
+
+    with st.expander("Voir les 30 variables utilisees par le modele"):
+        cols = st.columns(3)
+        for i, feature in enumerate(DEFAULT_FEATURES):
+            cols[i % 3].markdown(f"- `{feature}`")
+
+with tab_predict:
+    st.title("Tester une prediction")
 
     with st.form("predict_form"):
         col1, col2, col3 = st.columns(3)
@@ -93,7 +183,7 @@ with predict_tab:
         features: dict[str, float] = {}
 
         with col1:
-            st.markdown("**Mesures moyennes**")
+            st.markdown("### Mesures moyennes")
             for name in list(DEFAULT_FEATURES.keys())[:10]:
                 features[name] = st.number_input(
                     name,
@@ -102,7 +192,7 @@ with predict_tab:
                 )
 
         with col2:
-            st.markdown("**Erreurs standards**")
+            st.markdown("### Erreurs standards")
             for name in list(DEFAULT_FEATURES.keys())[10:20]:
                 features[name] = st.number_input(
                     name,
@@ -111,7 +201,7 @@ with predict_tab:
                 )
 
         with col3:
-            st.markdown("**Pires valeurs observées**")
+            st.markdown("### Pires valeurs observees")
             for name in list(DEFAULT_FEATURES.keys())[20:]:
                 features[name] = st.number_input(
                     name,
@@ -119,7 +209,7 @@ with predict_tab:
                     format="%.6f",
                 )
 
-        submitted = st.form_submit_button("🔍 Prédire", use_container_width=True)
+        submitted = st.form_submit_button("Predire", use_container_width=True)
 
     if submitted:
         payload = {"features": features}
@@ -127,61 +217,126 @@ with predict_tab:
         try:
             result = call_api("POST", "/predict", api_url, json=payload)
         except httpx.HTTPError as exc:
-            st.error(f"Erreur lors de l'appel à l'API : {exc}")
+            st.error(f"Appel a l'API impossible : {exc}")
+            st.session_state["last_result"] = None
         else:
             prediction = int(result["prediction"])
-            label = result["label"]
+            label = str(result["label"])
             probability = float(result["probability_malignant"])
 
-            st.divider()
-            st.subheader("Résultat de la prédiction")
+            record = {
+                "timestamp": datetime.now().strftime("%H:%M:%S"),
+                "prediction": prediction,
+                "label": label,
+                "probability_malignant": probability,
+                "feedback": None,
+            }
 
-            res_col1, res_col2, res_col3 = st.columns(3)
+            st.session_state["last_result"] = record
+            st.session_state["history"].insert(0, record)
 
-            with res_col1:
-                if prediction == 1:
-                    st.error("⚠️ Tumeur prédite : maligne")
-                else:
-                    st.success("✅ Tumeur prédite : bénigne")
+    if st.session_state["last_result"]:
+        result = st.session_state["last_result"]
+        prediction = int(result["prediction"])
+        probability = float(result["probability_malignant"])
 
-            with res_col2:
-                st.metric(
-                    label="Probabilité de malignité",
-                    value=f"{probability:.2%}",
-                )
-                st.progress(min(max(probability, 0.0), 1.0))
+        st.divider()
+        st.subheader("Resultat de la prediction")
 
-            with res_col3:
-                st.write("Réponse brute API")
-                st.json(result)
+        col_res1, col_res2, col_res3 = st.columns(3)
 
-            if "predictions" not in st.session_state:
-                st.session_state["predictions"] = []
+        with col_res1:
+            if prediction == 1:
+                st.error("Tumeur predite : maligne")
+            else:
+                st.success("Tumeur predite : benigne")
 
-            st.session_state["predictions"].append(
+        with col_res2:
+            st.metric("Probabilite de malignite", f"{probability:.2%}")
+            st.progress(min(max(probability, 0.0), 1.0))
+
+        with col_res3:
+            st.metric("Heure", result["timestamp"])
+            st.metric("Classe", prediction)
+
+        st.divider()
+        st.markdown("**Cette prediction est-elle correcte ?**")
+
+        col_yes, col_no = st.columns(2)
+        if col_yes.button("Correcte", use_container_width=True):
+            st.session_state["history"][0]["feedback"] = "correct"
+            st.success("Feedback enregistre.")
+        if col_no.button("Incorrecte", use_container_width=True):
+            st.session_state["history"][0]["feedback"] = "incorrect"
+            st.warning("Feedback enregistre.")
+
+        st.divider()
+        st.subheader("Historique de la session")
+
+        history = st.session_state.get("history", [])
+        if history:
+            rows = [
                 {
-                    "label": label,
-                    "prediction": prediction,
-                    "probability_malignant": probability,
+                    "Heure": item["timestamp"],
+                    "Prediction": "Maligne" if item["prediction"] == 1 else "Benigne",
+                    "Probabilite malignite": f"{item['probability_malignant']:.2%}",
+                    "Feedback": item.get("feedback") or "-",
                 }
-            )
+                for item in history
+            ]
+            st.dataframe(pd.DataFrame(rows), use_container_width=True)
 
-with info_tab:
-    st.subheader("Informations du modèle")
+            if st.button("Effacer l'historique"):
+                st.session_state["history"] = []
+                st.session_state["last_result"] = None
+                st.rerun()
 
-    try:
-        info = call_api("GET", "/model-info", api_url)
-    except httpx.HTTPError as exc:
-        st.error(f"Impossible de récupérer les informations modèle : {exc}")
+with tab_model:
+    st.title("Informations du modele")
+
+    info = fetch_model_info(api_url)
+
+    if not info:
+        st.error("Impossible de recuperer les informations du modele.")
     else:
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Modele charge", "Oui" if info.get("model_exists") else "Non")
+        col2.metric("Nombre de features", info.get("n_features", 0))
+        col3.metric("Cible", info.get("target", "inconnue"))
+
+        st.divider()
+        st.subheader("Features numeriques")
+        st.dataframe(pd.DataFrame({"feature": info.get("numeric_features", [])}))
+
+        st.divider()
+        st.subheader("Reponse complete de l'API")
         st.json(info)
 
-with history_tab:
-    st.subheader("Historique local des prédictions")
+with tab_monitoring:
+    st.title("Monitoring local")
 
-    predictions = st.session_state.get("predictions", [])
+    health = fetch_health(api_url)
+    info = fetch_model_info(api_url)
+    history = st.session_state.get("history", [])
 
-    if not predictions:
-        st.info("Aucune prédiction réalisée dans cette session.")
+    if health.get("status") == "ok" and info.get("model_exists"):
+        st.success("API disponible et modele charge.")
+    elif health.get("status") == "ok":
+        st.warning("API disponible mais modele non charge.")
     else:
-        st.dataframe(predictions, use_container_width=True)
+        st.error("API indisponible.")
+
+    st.divider()
+
+    total = len(history)
+    malignant = sum(1 for item in history if item["prediction"] == 1)
+    benign = total - malignant
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Predictions session", total)
+    col2.metric("Malignes", malignant)
+    col3.metric("Benignes", benign)
+
+    st.divider()
+    st.subheader("Liens utiles")
+    st.link_button("Ouvrir MLflow UI", MLFLOW_EXTERNAL_URL, use_container_width=True)
