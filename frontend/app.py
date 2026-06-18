@@ -5,6 +5,7 @@ Dashboard MLOps complet :
 - statut API / modèle
 - comparaison d'expériences
 - architecture MLOps
+- orchestration Airflow
 - monitoring de session
 """
 from __future__ import annotations
@@ -20,6 +21,7 @@ import streamlit as st
 API_URL = os.environ.get("API_URL", "http://127.0.0.1:8001")
 API_DOCS_URL = os.environ.get("API_DOCS_URL", "http://88.96.61.63:8000/docs")
 MLFLOW_EXTERNAL_URL = os.environ.get("MLFLOW_EXTERNAL_URL", "http://88.96.61.63:5000")
+AIRFLOW_EXTERNAL_URL = os.environ.get("AIRFLOW_EXTERNAL_URL", "http://88.96.61.63:8080")
 GITHUB_URL = os.environ.get(
     "GITHUB_URL",
     "https://github.com/Rymfouzari/mlops-iabd-esgi-FOUZARI",
@@ -113,10 +115,29 @@ MLOPS_STEPS = [
     ("06", "Registry", "Sauvegarde du modèle"),
     ("07", "API", "FastAPI pour l'inférence"),
     ("08", "UI", "Dashboard Streamlit"),
-    ("09", "Docker", "Orchestration compose"),
-    ("10", "CI/CD", "GitHub Actions + GHCR"),
-    ("11", "Cloud", "Déploiement Oracle"),
+    ("09", "Airflow", "Orchestration des DAGs MLOps"),
+    ("10", "Docker", "Orchestration compose"),
+    ("11", "CI/CD", "GitHub Actions + GHCR"),
+    ("12", "Cloud", "Déploiement Oracle"),
 ]
+
+AIRFLOW_DAGS = [
+    {
+        "DAG": "breast_training_pipeline",
+        "Étape 1": "validate_dataset",
+        "Étape 2": "train_baseline",
+        "Étape 3": "train_optuna",
+        "Rôle": "Orchestration du pipeline d'entraînement",
+    },
+    {
+        "DAG": "breast_predict_pipeline",
+        "Étape 1": "check_api_health",
+        "Étape 2": "run_predict_client",
+        "Étape 3": "-",
+        "Rôle": "Validation automatique de l'API de prédiction",
+    },
+]
+
 
 
 def call_api(method: str, path: str, api_url: str, **kwargs: Any) -> dict[str, Any]:
@@ -226,9 +247,27 @@ st.markdown(
             color: #0f172a;
         }
 
+        @keyframes floatUp {
+            0% { transform: translateY(12px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes glowPulse {
+            0% { box-shadow: 0 18px 45px rgba(59, 130, 246, 0.22); }
+            50% { box-shadow: 0 18px 55px rgba(236, 72, 153, 0.34); }
+            100% { box-shadow: 0 18px 45px rgba(59, 130, 246, 0.22); }
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         .block-container {
             padding-top: 1.25rem;
             padding-bottom: 2.4rem;
+            animation: floatUp 0.55s ease-out;
         }
 
         section[data-testid="stSidebar"] {
@@ -316,7 +355,9 @@ st.markdown(
             padding: 1.7rem 1.85rem;
             border-radius: 1.45rem;
             background:
-                linear-gradient(135deg, rgba(15,23,42,0.98), rgba(49,46,129,0.96) 40%, rgba(219,39,119,0.92) 72%, rgba(6,182,212,0.95));
+                linear-gradient(135deg, rgba(15,23,42,0.98), rgba(49,46,129,0.96), rgba(219,39,119,0.92), rgba(6,182,212,0.95));
+            background-size: 240% 240%;
+            animation: gradientShift 9s ease infinite, glowPulse 3.8s ease-in-out infinite;
             color: white;
             margin-bottom: 1.25rem;
             box-shadow: 0 24px 58px rgba(49,46,129,0.28);
@@ -367,6 +408,33 @@ st.markdown(
                 linear-gradient(135deg, rgba(255,255,255,0.95), rgba(219,234,254,0.78));
             border: 1px solid rgba(147,197,253,0.45);
             box-shadow: 0 12px 26px rgba(30,41,59,0.08);
+        }
+
+        .airflow-card {
+            position: relative;
+            padding: 1rem;
+            border-radius: 1.15rem;
+            background:
+                linear-gradient(135deg, rgba(255,255,255,0.96), rgba(224,242,254,0.88));
+            border: 1px solid rgba(14,165,233,0.35);
+            box-shadow: 0 14px 32px rgba(14,165,233,0.12);
+            overflow: hidden;
+        }
+
+        .airflow-card:before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 90% 10%, rgba(236,72,153,0.18), transparent 32%);
+            pointer-events: none;
+        }
+
+        .flow-arrow {
+            font-size: 1.35rem;
+            font-weight: 900;
+            color: #2563eb;
+            text-align: center;
+            margin: 0.15rem 0;
         }
 
         .step-num {
@@ -460,6 +528,7 @@ with st.sidebar:
     st.divider()
     st.markdown("## 🔗 Liens utiles")
     st.link_button("MLflow Tracking", MLFLOW_EXTERNAL_URL, use_container_width=True)
+    st.link_button("Airflow DAGs", AIRFLOW_EXTERNAL_URL, use_container_width=True)
     st.link_button("FastAPI Docs", API_DOCS_URL, use_container_width=True)
     st.link_button("Dépôt GitHub", GITHUB_URL, use_container_width=True)
 
@@ -467,7 +536,8 @@ with st.sidebar:
         st.code(
             f"""API_URL={api_url}
 API_DOCS_URL={API_DOCS_URL}
-MLFLOW_EXTERNAL_URL={MLFLOW_EXTERNAL_URL}""",
+MLFLOW_EXTERNAL_URL={MLFLOW_EXTERNAL_URL}
+AIRFLOW_EXTERNAL_URL={AIRFLOW_EXTERNAL_URL}""",
             language="bash",
         )
 
@@ -477,15 +547,15 @@ st.markdown(
         <h1>🧬 Breast Cancer MLOps Dashboard</h1>
         <p>
             Dashboard complet : prédiction médicale, monitoring, MLflow,
-            FastAPI, Docker, CI/CD et déploiement Oracle Cloud.
+            Airflow, FastAPI, Docker, CI/CD et déploiement Oracle Cloud.
         </p>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-tab_home, tab_predict, tab_experiments, tab_model, tab_architecture, tab_monitoring = st.tabs(
-    ["🏠 Accueil", "🔎 Prédiction", "📊 Expériences", "🧠 Modèle", "🏗️ Architecture", "📡 Monitoring"]
+tab_home, tab_predict, tab_experiments, tab_model, tab_airflow, tab_architecture, tab_monitoring = st.tabs(
+    ["🏠 Accueil", "🔎 Prédiction", "📊 Expériences", "🧠 Modèle", "🌬️ Airflow", "🏗️ Architecture", "📡 Monitoring"]
 )
 
 with tab_home:
@@ -514,6 +584,7 @@ with tab_home:
             <span class="badge info">Optuna</span>
             <span class="badge info">FastAPI</span>
             <span class="badge info">Streamlit</span>
+            <span class="badge info">Airflow</span>
             <span class="badge info">Docker</span>
             <span class="badge info">Oracle</span>
             """,
@@ -681,6 +752,70 @@ with tab_model:
             st.markdown("### Réponse API")
             st.json(model_info)
 
+with tab_airflow:
+    st.subheader("Orchestration Apache Airflow")
+
+    a1, a2, a3, a4 = st.columns(4)
+    a1.metric("DAGs", "2")
+    a2.metric("Training", "OK")
+    a3.metric("Prediction", "OK")
+    a4.metric("Port", "8080")
+
+    st.divider()
+
+    flow_left, flow_right = st.columns(2)
+
+    with flow_left:
+        st.markdown(
+            """
+            <div class="airflow-card">
+                <h3>🧬 breast_training_pipeline</h3>
+                <p class="muted">Pipeline d'entraînement automatisé.</p>
+                <div class="badge info">validate_dataset</div>
+                <div class="flow-arrow">↓</div>
+                <div class="badge info">train_baseline</div>
+                <div class="flow-arrow">↓</div>
+                <div class="badge info">train_optuna</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with flow_right:
+        st.markdown(
+            """
+            <div class="airflow-card">
+                <h3>🚀 breast_predict_pipeline</h3>
+                <p class="muted">Pipeline de validation de l'API d'inférence.</p>
+                <div class="badge success">check_api_health</div>
+                <div class="flow-arrow">↓</div>
+                <div class="badge success">run_predict_client</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.divider()
+
+    st.markdown("### DAGs configurés")
+    st.dataframe(pd.DataFrame(AIRFLOW_DAGS), use_container_width=True, hide_index=True)
+
+    st.markdown("### Accès Airflow")
+    st.info(
+        "L'historique détaillé des runs est disponible dans l'interface Airflow. "
+        "L'intégration directe dans Streamlit demanderait d'appeler l'API REST Airflow avec authentification."
+    )
+    st.link_button("Ouvrir Airflow", AIRFLOW_EXTERNAL_URL, use_container_width=True)
+
+    st.code(
+        """# Commandes utiles
+docker compose up -d airflow
+docker compose logs airflow --tail=100
+docker compose restart airflow""",
+        language="bash",
+    )
+
+
 with tab_architecture:
     st.subheader("Architecture technique")
 
@@ -691,6 +826,7 @@ with tab_architecture:
         {"Bloc": "Tracking", "Fichier": "todo/mlproject/tracking.py", "Rôle": "MLflow centralisé"},
         {"Bloc": "API", "Fichier": "todo/mlproject/api.py", "Rôle": "FastAPI inference"},
         {"Bloc": "Frontend", "Fichier": "frontend/app.py", "Rôle": "dashboard Streamlit"},
+        {"Bloc": "Airflow", "Fichier": "dags/", "Rôle": "orchestration des workflows"},
         {"Bloc": "Docker", "Fichier": "docker-compose.yml", "Rôle": "orchestration"},
         {"Bloc": "CI", "Fichier": ".github/workflows/ci.yml", "Rôle": "lint, types, tests"},
         {"Bloc": "CD", "Fichier": ".github/workflows/cd.yml", "Rôle": "GHCR"},
@@ -757,12 +893,13 @@ with tab_monitoring:
             "public_links": {
                 "api_docs": API_DOCS_URL,
                 "mlflow": MLFLOW_EXTERNAL_URL,
+                "airflow": AIRFLOW_EXTERNAL_URL,
                 "github": GITHUB_URL,
             },
         }
     )
 
 st.markdown(
-    '<div class="footer-note">Dashboard Streamlit · Projet MLOps Breast Cancer Wisconsin · Rym FOUZARI</div>',
+    '<div class="footer-note">Dashboard Streamlit · MLflow · Airflow · FastAPI · Oracle Cloud · Rym FOUZARI</div>',
     unsafe_allow_html=True,
 )
