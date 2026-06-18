@@ -24,7 +24,7 @@ services:
       --serve-artifacts
       --allowed-hosts "*"
     ports:
-      - "5001:5000"
+      - "5000:5000"
     volumes:
       - mlflow_data:/mlflow
 
@@ -32,14 +32,12 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.train
-    # Entraine et ecrit models/model.joblib dans le volume partage models_data.
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5000
     depends_on:
       - mlflow
     volumes:
       - models_data:/app/models
-    # Le profil "train" evite que ce service one-shot demarre avec `up`.
     profiles:
       - train
 
@@ -48,7 +46,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.api
     ports:
-      - "8001:8000"
+      - "8000:8000"
     environment:
       API_URL: http://api:8000
     volumes:
@@ -67,12 +65,14 @@ services:
       dockerfile: docker/Dockerfile.frontend
     environment:
       API_URL: http://api:8000
+      API_DOCS_URL: http://88.96.61.63:8000/docs
+      MLFLOW_EXTERNAL_URL: http://88.96.61.63:5000
+      GITHUB_URL: https://github.com/Rymfouzari/mlops-iabd-esgi-FOUZARI
     ports:
       - "8501:8501"
     depends_on:
       api:
         condition: service_healthy
-
 
 volumes:
   mlflow_data:
