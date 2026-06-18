@@ -72,8 +72,9 @@ services:
       --firstname Rym
       --lastname Fouzari
       --role Admin
-      --email admin@example.com || true &&
-      airflow standalone
+      --email admin@example.com || true;
+      airflow scheduler &
+      airflow webserver --host 0.0.0.0 --port 8080
       "
     environment:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
