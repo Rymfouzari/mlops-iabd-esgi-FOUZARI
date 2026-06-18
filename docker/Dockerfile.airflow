@@ -8,8 +8,12 @@ RUN apt-get update \
 
 USER airflow
 
-COPY pyproject.toml ./
-COPY uv.lock ./
-
-RUN pip install --no-cache-dir . \
-    && pip install --no-cache-dir httpx scikit-learn mlflow optuna xgboost lightgbm
+RUN pip install --no-cache-dir \
+    httpx \
+    mlflow \
+    optuna \
+    scikit-learn \
+    xgboost \
+    lightgbm \
+    pandas \
+    numpy
