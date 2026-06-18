@@ -7,7 +7,10 @@
 # Commandes (depuis la racine du projet) :
 #   docker compose up -d mlflow
 #   docker compose --profile train run --rm train
-#   docker compose up -d api
+#   docker compose up -d api frontend
+#API sur http://localhost:8001
+#frontend sur http://localhost:8501
+#MLflow sur http://localhost:5001
 #   -> API sur http://localhost:8000, frontend sur http://localhost:8501
 
 services:
