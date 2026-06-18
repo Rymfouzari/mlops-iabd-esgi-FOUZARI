@@ -1,4 +1,3 @@
-cat > Makefile <<'EOF'
 # ==============================================================================
 # Breast Cancer Classification - Pipeline MLOps
 # ==============================================================================
@@ -182,4 +181,3 @@ test: ## Lance les tests Pytest
 	PYTHONPATH=todo $(RUN) pytest
 
 check: lint type test ## Lance lint + type + tests
-EOF
