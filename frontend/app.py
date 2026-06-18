@@ -1,11 +1,11 @@
-"""Frontend Streamlit pour l'API Breast Cancer Classification.
+"""Frontend Streamlit stylé pour l'API Breast Cancer Classification.
 
 Dashboard MLOps complet :
-- Prediction via API FastAPI
-- Statut API / modele
-- Resume des experiences MLflow
-- Architecture projet
-- Monitoring local de session
+- prédiction via FastAPI
+- statut API / modèle
+- comparaison d'expériences
+- architecture MLOps
+- monitoring de session
 """
 from __future__ import annotations
 
@@ -26,43 +26,70 @@ GITHUB_URL = os.environ.get(
 )
 
 DEFAULT_FEATURES: dict[str, float] = {
-    "mean radius": 17.99, "mean texture": 10.38, "mean perimeter": 122.8,
-    "mean area": 1001.0, "mean smoothness": 0.1184, "mean compactness": 0.2776,
-    "mean concavity": 0.3001, "mean concave points": 0.1471,
-    "mean symmetry": 0.2419, "mean fractal dimension": 0.07871,
-    "radius error": 1.095, "texture error": 0.9053, "perimeter error": 8.589,
-    "area error": 153.4, "smoothness error": 0.006399,
-    "compactness error": 0.04904, "concavity error": 0.05373,
-    "concave points error": 0.01587, "symmetry error": 0.03003,
-    "fractal dimension error": 0.006193, "worst radius": 25.38,
-    "worst texture": 17.33, "worst perimeter": 184.6, "worst area": 2019.0,
-    "worst smoothness": 0.1622, "worst compactness": 0.6656,
-    "worst concavity": 0.7119, "worst concave points": 0.2654,
-    "worst symmetry": 0.4601, "worst fractal dimension": 0.1189,
+    "mean radius": 17.99,
+    "mean texture": 10.38,
+    "mean perimeter": 122.8,
+    "mean area": 1001.0,
+    "mean smoothness": 0.1184,
+    "mean compactness": 0.2776,
+    "mean concavity": 0.3001,
+    "mean concave points": 0.1471,
+    "mean symmetry": 0.2419,
+    "mean fractal dimension": 0.07871,
+    "radius error": 1.095,
+    "texture error": 0.9053,
+    "perimeter error": 8.589,
+    "area error": 153.4,
+    "smoothness error": 0.006399,
+    "compactness error": 0.04904,
+    "concavity error": 0.05373,
+    "concave points error": 0.01587,
+    "symmetry error": 0.03003,
+    "fractal dimension error": 0.006193,
+    "worst radius": 25.38,
+    "worst texture": 17.33,
+    "worst perimeter": 184.6,
+    "worst area": 2019.0,
+    "worst smoothness": 0.1622,
+    "worst compactness": 0.6656,
+    "worst concavity": 0.7119,
+    "worst concave points": 0.2654,
+    "worst symmetry": 0.4601,
+    "worst fractal dimension": 0.1189,
 }
 
 ALT_EXAMPLE: dict[str, float] = {
-    "mean radius": 11.42, "mean texture": 20.38, "mean perimeter": 77.58,
-    "mean area": 386.1, "mean smoothness": 0.1425, "mean compactness": 0.2839,
-    "mean concavity": 0.2414, "mean concave points": 0.1052,
-    "mean symmetry": 0.2597, "mean fractal dimension": 0.09744,
-    "radius error": 0.4956, "texture error": 1.156, "perimeter error": 3.445,
-    "area error": 27.23, "smoothness error": 0.00911,
-    "compactness error": 0.07458, "concavity error": 0.05661,
-    "concave points error": 0.01867, "symmetry error": 0.05963,
-    "fractal dimension error": 0.009208, "worst radius": 14.91,
-    "worst texture": 26.5, "worst perimeter": 98.87, "worst area": 567.7,
-    "worst smoothness": 0.2098, "worst compactness": 0.8663,
-    "worst concavity": 0.6869, "worst concave points": 0.2575,
-    "worst symmetry": 0.6638, "worst fractal dimension": 0.173,
+    "mean radius": 11.42,
+    "mean texture": 20.38,
+    "mean perimeter": 77.58,
+    "mean area": 386.1,
+    "mean smoothness": 0.1425,
+    "mean compactness": 0.2839,
+    "mean concavity": 0.2414,
+    "mean concave points": 0.1052,
+    "mean symmetry": 0.2597,
+    "mean fractal dimension": 0.09744,
+    "radius error": 0.4956,
+    "texture error": 1.156,
+    "perimeter error": 3.445,
+    "area error": 27.23,
+    "smoothness error": 0.00911,
+    "compactness error": 0.07458,
+    "concavity error": 0.05661,
+    "concave points error": 0.01867,
+    "symmetry error": 0.05963,
+    "fractal dimension error": 0.009208,
+    "worst radius": 14.91,
+    "worst texture": 26.5,
+    "worst perimeter": 98.87,
+    "worst area": 567.7,
+    "worst smoothness": 0.2098,
+    "worst compactness": 0.8663,
+    "worst concavity": 0.6869,
+    "worst concave points": 0.2575,
+    "worst symmetry": 0.6638,
+    "worst fractal dimension": 0.173,
 }
-
-MODEL_RESULTS = [
-    {"Modele": "Baseline Logistic Regression", "F1": 0.951, "ROC-AUC": 0.996, "Approche": "Baseline"},
-    {"Modele": "RandomForest GridSearchCV", "F1": 0.963, "ROC-AUC": 0.993, "Approche": "Grid Search"},
-    {"Modele": "XGBoost GridSearchCV", "F1": 0.950, "ROC-AUC": 0.995, "Approche": "Grid Search"},
-    {"Modele": "LightGBM Optuna", "F1": None, "ROC-AUC": 0.995, "Approche": "Optuna"},
-]
 
 FEATURE_GROUPS = {
     "Mesures moyennes": list(DEFAULT_FEATURES.keys())[:10],
@@ -70,21 +97,30 @@ FEATURE_GROUPS = {
     "Pires valeurs observées": list(DEFAULT_FEATURES.keys())[20:],
 }
 
+MODEL_RESULTS = [
+    {"Modèle": "Logistic Regression", "Approche": "Baseline", "F1": 0.951, "ROC-AUC": 0.996},
+    {"Modèle": "RandomForest", "Approche": "GridSearchCV", "F1": 0.963, "ROC-AUC": 0.993},
+    {"Modèle": "XGBoost", "Approche": "GridSearchCV", "F1": 0.950, "ROC-AUC": 0.995},
+    {"Modèle": "LightGBM", "Approche": "Optuna", "F1": None, "ROC-AUC": 0.995},
+]
+
 MLOPS_STEPS = [
-    ("Dataset", "Breast Cancer Wisconsin", "data/breast_cancer.csv"),
-    ("Baseline", "LogisticRegression + pipeline sklearn", "train.py"),
-    ("Tracking", "Paramètres, métriques, artefacts", "tracking.py"),
-    ("Comparaison", "RF / XGBoost / LightGBM", "train_models.py"),
-    ("Optimisation", "Recherche d'hyperparamètres", "train_optuna.py"),
-    ("Serving", "Inference REST", "api.py"),
-    ("Frontend", "Dashboard Streamlit", "frontend/app.py"),
-    ("Docker", "MLflow + API + Frontend", "docker-compose.yml"),
-    ("CI/CD", "Tests + build + GHCR", ".github/workflows/"),
-    ("Cloud", "Déploiement Oracle", "OCI Compute"),
+    ("01", "Data", "Dataset Breast Cancer Wisconsin"),
+    ("02", "Baseline", "Pipeline sklearn reproductible"),
+    ("03", "Tracking", "MLflow params, métriques, artefacts"),
+    ("04", "Search", "GridSearchCV multi-modèles"),
+    ("05", "Optuna", "Optimisation automatique"),
+    ("06", "Registry", "Sauvegarde du modèle"),
+    ("07", "API", "FastAPI pour l'inférence"),
+    ("08", "UI", "Dashboard Streamlit"),
+    ("09", "Docker", "Orchestration compose"),
+    ("10", "CI/CD", "GitHub Actions + GHCR"),
+    ("11", "Cloud", "Déploiement Oracle"),
 ]
 
 
 def call_api(method: str, path: str, api_url: str, **kwargs: Any) -> dict[str, Any]:
+    """Appelle l'API FastAPI et retourne la réponse JSON."""
     url = f"{api_url.rstrip('/')}/{path.lstrip('/')}"
     response = httpx.request(method, url, timeout=10.0, **kwargs)
     response.raise_for_status()
@@ -114,7 +150,7 @@ def init_state() -> None:
         st.session_state["active_example"] = DEFAULT_FEATURES.copy()
 
 
-def label_from_prediction(prediction: int) -> str:
+def prediction_label(prediction: int) -> str:
     return "Maligne" if prediction == 1 else "Bénigne"
 
 
@@ -140,25 +176,23 @@ def add_history(result: dict[str, Any], features: dict[str, float]) -> None:
     record = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "prediction": prediction,
-        "display_label": label_from_prediction(prediction),
+        "label": prediction_label(prediction),
         "probability_malignant": probability,
-        "risk_band": risk_band(probability),
-        "feedback": None,
+        "risk": risk_band(probability),
         "features": features.copy(),
     }
     st.session_state["last_result"] = record
     st.session_state["history"].insert(0, record)
 
 
-def history_table(history: list[dict[str, Any]]) -> pd.DataFrame:
+def history_df(history: list[dict[str, Any]]) -> pd.DataFrame:
     return pd.DataFrame(
         [
             {
                 "Date": item["timestamp"],
-                "Prédiction": item["display_label"],
+                "Prédiction": item["label"],
                 "Probabilité malignité": f"{item['probability_malignant']:.2%}",
-                "Niveau": item["risk_band"],
-                "Feedback": item.get("feedback") or "-",
+                "Niveau": item["risk"],
             }
             for item in history
         ]
@@ -166,7 +200,7 @@ def history_table(history: list[dict[str, Any]]) -> pd.DataFrame:
 
 
 st.set_page_config(
-    page_title="Breast Cancer MLOps Dashboard",
+    page_title="Rym FOUZARI · MLOps Dashboard",
     page_icon="🧬",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -177,23 +211,37 @@ init_state()
 st.markdown(
     """
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+
+        html, body, [class*="css"] {
+            font-family: 'Inter', sans-serif;
+        }
+
         .stApp {
             background:
-                radial-gradient(circle at 8% 12%, rgba(236, 72, 153, 0.14), transparent 28%),
-                radial-gradient(circle at 90% 10%, rgba(14, 165, 233, 0.16), transparent 30%),
-                radial-gradient(circle at 45% 95%, rgba(168, 85, 247, 0.10), transparent 28%),
-                linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+                radial-gradient(circle at 10% 12%, rgba(236, 72, 153, 0.20), transparent 28%),
+                radial-gradient(circle at 88% 8%, rgba(56, 189, 248, 0.22), transparent 30%),
+                radial-gradient(circle at 50% 95%, rgba(124, 58, 237, 0.16), transparent 33%),
+                linear-gradient(135deg, #f8fafc 0%, #eef2ff 45%, #fdf2f8 100%);
+            color: #0f172a;
+        }
+
+        .block-container {
+            padding-top: 1.25rem;
+            padding-bottom: 2.4rem;
         }
 
         section[data-testid="stSidebar"] {
             background:
-                linear-gradient(180deg, #111827 0%, #312e81 42%, #0f766e 100%);
+                radial-gradient(circle at 0% 0%, rgba(244, 114, 182, 0.55), transparent 35%),
+                radial-gradient(circle at 100% 18%, rgba(34, 211, 238, 0.35), transparent 34%),
+                linear-gradient(180deg, #0f172a 0%, #312e81 48%, #0f766e 100%);
         }
 
         section[data-testid="stSidebar"] div[data-testid="stSidebarContent"] {
             overflow-y: auto;
             padding-top: 1rem;
-            padding-bottom: 1rem;
+            padding-bottom: 1.2rem;
         }
 
         section[data-testid="stSidebar"] h1,
@@ -205,26 +253,27 @@ st.markdown(
             color: #f8fafc;
         }
 
-        section[data-testid="stSidebar"] div[data-testid="stMetric"] {
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            border-radius: 1rem;
-            padding: 0.65rem;
-        }
-
         section[data-testid="stSidebar"] input {
             color: #0f172a !important;
             background: #ffffff !important;
-            border-radius: 0.7rem !important;
+            border-radius: 0.8rem !important;
+        }
+
+        section[data-testid="stSidebar"] div[data-testid="stMetric"] {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 1rem;
+            padding: 0.72rem;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.18);
         }
 
         section[data-testid="stSidebar"] .stLinkButton a {
-            background: linear-gradient(135deg, #ffffff, #e0f2fe) !important;
+            background: linear-gradient(135deg, #ffffff, #dbeafe) !important;
             color: #0f172a !important;
-            border: 1px solid rgba(255, 255, 255, 0.65) !important;
-            border-radius: 0.85rem !important;
-            font-weight: 800 !important;
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255,255,255,0.72) !important;
+            border-radius: 0.9rem !important;
+            font-weight: 900 !important;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.20);
         }
 
         section[data-testid="stSidebar"] .stLinkButton a p,
@@ -235,80 +284,140 @@ st.markdown(
         section[data-testid="stSidebar"] .stLinkButton a:hover {
             background: linear-gradient(135deg, #fef3c7, #f9a8d4) !important;
             color: #111827 !important;
-            border-color: rgba(255, 255, 255, 0.9) !important;
         }
-
-        .sidebar-small {
-            font-size: 0.78rem;
-            line-height: 1.25;
-            color: rgba(248,250,252,0.82);
-        }
-
-        .block-container {padding-top: 1.2rem; padding-bottom: 2rem;}
 
         .author-card {
-            padding: 0.95rem 0.9rem;
-            border-radius: 1.2rem;
-            background: linear-gradient(135deg, rgba(244, 114, 182, 0.95), rgba(14, 165, 233, 0.95));
-            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
-            margin-bottom: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.28);
+            padding: 1.05rem 0.95rem;
+            border-radius: 1.25rem;
+            background:
+                linear-gradient(135deg, rgba(244, 114, 182, 0.96), rgba(59, 130, 246, 0.92), rgba(45, 212, 191, 0.88));
+            box-shadow: 0 18px 45px rgba(0,0,0,0.28);
+            margin-bottom: 1.1rem;
+            border: 1px solid rgba(255,255,255,0.32);
         }
 
         .author-name {
             color: white;
-            font-size: 1.65rem;
-            font-weight: 900;
-            letter-spacing: 0.03em;
-            line-height: 1.05;
+            font-size: 1.8rem;
+            font-weight: 950;
+            line-height: 1;
+            letter-spacing: 0.04em;
         }
 
         .author-role {
-            color: rgba(255, 255, 255, 0.88);
-            font-size: 0.88rem;
-            margin-top: 0.4rem;
-            font-weight: 600;
+            color: rgba(255,255,255,0.90);
+            font-size: 0.86rem;
+            margin-top: 0.45rem;
+            font-weight: 700;
         }
 
         .hero {
-            padding: 1.55rem 1.75rem; border-radius: 1.35rem;
+            position: relative;
+            padding: 1.7rem 1.85rem;
+            border-radius: 1.45rem;
             background:
-                linear-gradient(135deg, rgba(15, 23, 42, 0.97) 0%, rgba(49, 46, 129, 0.96) 38%, rgba(219, 39, 119, 0.90) 72%, rgba(6, 182, 212, 0.92) 100%);
-            color: white; margin-bottom: 1.2rem;
-            box-shadow: 0 20px 50px rgba(49, 46, 129, 0.26);
-            border: 1px solid rgba(255,255,255,0.16);
+                linear-gradient(135deg, rgba(15,23,42,0.98), rgba(49,46,129,0.96) 40%, rgba(219,39,119,0.92) 72%, rgba(6,182,212,0.95));
+            color: white;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 24px 58px rgba(49,46,129,0.28);
+            border: 1px solid rgba(255,255,255,0.18);
+            overflow: hidden;
         }
-        .hero h1 {color: white; margin-bottom: 0.35rem; font-size: 2.25rem;}
-        .hero p {color: rgba(255,255,255,0.90); font-size: 1.04rem; margin-bottom: 0;}
+
+        .hero:after {
+            content: "";
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            right: -60px;
+            top: -70px;
+            background: rgba(255,255,255,0.16);
+            border-radius: 999px;
+        }
+
+        .hero h1 {
+            color: white;
+            margin-bottom: 0.45rem;
+            font-size: 2.45rem;
+            font-weight: 950;
+        }
+
+        .hero p {
+            color: rgba(255,255,255,0.91);
+            font-size: 1.05rem;
+            margin-bottom: 0;
+            max-width: 850px;
+        }
+
+        .glass-card {
+            background: rgba(255,255,255,0.70);
+            border: 1px solid rgba(148,163,184,0.24);
+            border-radius: 1.15rem;
+            padding: 1rem;
+            box-shadow: 0 16px 36px rgba(15,23,42,0.08);
+            backdrop-filter: blur(10px);
+        }
 
         .step-card {
-            border-left: 5px solid #ec4899; border-radius: 0.85rem;
-            padding: 0.82rem 0.95rem;
-            background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(239,246,255,0.78));
-            margin-bottom: 0.70rem;
-            box-shadow: 0 10px 22px rgba(30, 41, 59, 0.07);
+            min-height: 112px;
+            border-radius: 1rem;
+            padding: 0.9rem;
+            margin-bottom: 0.75rem;
+            background:
+                linear-gradient(135deg, rgba(255,255,255,0.95), rgba(219,234,254,0.78));
+            border: 1px solid rgba(147,197,253,0.45);
+            box-shadow: 0 12px 26px rgba(30,41,59,0.08);
+        }
+
+        .step-num {
+            display: inline-block;
+            padding: 0.18rem 0.45rem;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #ec4899, #3b82f6);
+            color: white;
+            font-weight: 900;
+            font-size: 0.75rem;
+            margin-bottom: 0.3rem;
         }
 
         .badge {
-            display: inline-block; padding: 0.34rem 0.68rem; border-radius: 999px;
-            font-size: 0.82rem; font-weight: 800; margin: 0.12rem 0.08rem;
-            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+            display: inline-block;
+            padding: 0.34rem 0.68rem;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 900;
+            margin: 0.10rem 0.08rem;
+            box-shadow: 0 7px 17px rgba(15,23,42,0.10);
         }
+
         .success {background: linear-gradient(135deg, #bbf7d0, #34d399); color: #064e3b;}
         .warning {background: linear-gradient(135deg, #fde68a, #f59e0b); color: #78350f;}
         .danger {background: linear-gradient(135deg, #fecdd3, #fb7185); color: #881337;}
         .info {background: linear-gradient(135deg, #bfdbfe, #60a5fa); color: #172554;}
 
-        .muted {color: #64748b; font-size: 0.92rem;}
         div[data-testid="stMetric"] {
-            background: rgba(255, 255, 255, 0.72);
-            border: 1px solid rgba(148, 163, 184, 0.20);
+            background: rgba(255,255,255,0.74);
+            border: 1px solid rgba(148,163,184,0.22);
             border-radius: 1rem;
             padding: 0.9rem;
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+            box-shadow: 0 12px 26px rgba(15,23,42,0.07);
         }
-        div[data-testid="stMetricValue"] {font-size: 1.58rem;}
-        .footer-note {color: #64748b; font-size: 0.86rem; padding-top: 0.6rem;}
+
+        div[data-testid="stMetricValue"] {
+            font-size: 1.62rem;
+            font-weight: 900;
+        }
+
+        .muted {
+            color: #64748b;
+            font-size: 0.92rem;
+        }
+
+        .footer-note {
+            color: #64748b;
+            font-size: 0.86rem;
+            padding-top: 0.6rem;
+        }
     </style>
     """,
     unsafe_allow_html=True,
@@ -319,11 +428,12 @@ with st.sidebar:
         """
         <div class="author-card">
             <div class="author-name">Rym FOUZARI</div>
-            <div class="author-role">MLOps Engineer · Breast Cancer Classification</div>
+            <div class="author-role">MLOps · Breast Cancer Classification</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
     st.markdown("## 🧭 Pilotage")
     api_url = st.text_input("URL interne de l'API", value=API_URL)
 
@@ -341,9 +451,10 @@ with st.sidebar:
         st.error("API indisponible")
 
     st.divider()
-    col_a, col_b = st.columns(2)
-    col_a.metric("API", "OK" if api_ok else "KO")
-    col_b.metric("Modèle", "OK" if model_ok else "KO")
+
+    col_api, col_model = st.columns(2)
+    col_api.metric("API", "OK" if api_ok else "KO")
+    col_model.metric("Modèle", "OK" if model_ok else "KO")
     st.metric("Variables", model_info.get("n_features", 30))
 
     st.divider()
@@ -352,17 +463,12 @@ with st.sidebar:
     st.link_button("FastAPI Docs", API_DOCS_URL, use_container_width=True)
     st.link_button("Dépôt GitHub", GITHUB_URL, use_container_width=True)
 
-    st.divider()
     with st.expander("⚙️ Configuration technique"):
-        st.markdown(
-            f"""
-            <div class="sidebar-small">
-            <b>API interne</b><br>{api_url}<br><br>
-            <b>Docs API publiques</b><br>{API_DOCS_URL}<br><br>
-            <b>MLflow public</b><br>{MLFLOW_EXTERNAL_URL}
-            </div>
-            """,
-            unsafe_allow_html=True,
+        st.code(
+            f"""API_URL={api_url}
+API_DOCS_URL={API_DOCS_URL}
+MLFLOW_EXTERNAL_URL={MLFLOW_EXTERNAL_URL}""",
+            language="bash",
         )
 
 st.markdown(
@@ -370,8 +476,8 @@ st.markdown(
     <div class="hero">
         <h1>🧬 Breast Cancer MLOps Dashboard</h1>
         <p>
-            Classification binaire, tracking MLflow, API FastAPI, frontend Streamlit,
-            Docker Compose, CI/CD GitHub Actions et déploiement Oracle Cloud.
+            Dashboard complet : prédiction médicale, monitoring, MLflow,
+            FastAPI, Docker, CI/CD et déploiement Oracle Cloud.
         </p>
     </div>
     """,
@@ -386,34 +492,37 @@ with tab_home:
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
     kpi1.metric("Observations", "569")
     kpi2.metric("Variables", "30")
-    kpi3.metric("ROC-AUC baseline", "0.996")
-    kpi4.metric("Stack", "MLOps")
+    kpi3.metric("ROC-AUC", "0.996")
+    kpi4.metric("Déploiement", "Oracle")
 
     st.divider()
     left, right = st.columns([1.25, 1])
 
     with left:
-        st.subheader("Objectif du projet")
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.subheader("Objectif")
         st.markdown(
             """
-            Ce dashboard sert de vitrine finale du TP : il ne fait pas seulement une
-            prédiction, il montre aussi la chaîne MLOps qui permet d'industrialiser
-            un modèle de machine learning.
+            Ce frontend présente une chaîne MLOps complète autour d'un modèle de
+            classification binaire. Il sert de vitrine de projet : entraînement,
+            tracking, optimisation, API, conteneurisation, CI/CD et déploiement cloud.
             """
         )
         st.markdown(
             """
-            <span class="badge info">Dataset</span>
             <span class="badge info">MLflow</span>
             <span class="badge info">Optuna</span>
             <span class="badge info">FastAPI</span>
+            <span class="badge info">Streamlit</span>
             <span class="badge info">Docker</span>
-            <span class="badge info">Oracle Cloud</span>
+            <span class="badge info">Oracle</span>
             """,
             unsafe_allow_html=True,
         )
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with right:
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.subheader("Lecture métier")
         st.markdown(
             """
@@ -422,20 +531,21 @@ with tab_home:
             - la probabilité affichée correspond au risque estimé de malignité
             """
         )
-        st.info("Cas d'étude MLOps : ne pas utiliser comme outil médical réel.")
+        st.info("Projet pédagogique MLOps : ne pas utiliser comme outil médical réel.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.divider()
     st.subheader("Pipeline MLOps")
 
-    cols = st.columns(5)
-    for index, (step, description, file_name) in enumerate(MLOPS_STEPS):
-        with cols[index % 5]:
+    cols = st.columns(4)
+    for i, (num, title, desc) in enumerate(MLOPS_STEPS):
+        with cols[i % 4]:
             st.markdown(
                 f"""
                 <div class="step-card">
-                    <b>{index + 1}. {step}</b><br>
-                    <span class="muted">{description}</span><br>
-                    <code>{file_name}</code>
+                    <span class="step-num">{num}</span><br>
+                    <b>{title}</b><br>
+                    <span class="muted">{desc}</span>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -444,31 +554,31 @@ with tab_home:
 with tab_predict:
     st.subheader("Prédiction individuelle")
 
-    action_col1, action_col2, action_col3 = st.columns([1, 1, 2])
-    with action_col1:
-        if st.button("Charger exemple standard", use_container_width=True):
+    a, b, c = st.columns([1, 1, 2])
+    with a:
+        if st.button("Exemple standard", use_container_width=True):
             st.session_state["active_example"] = DEFAULT_FEATURES.copy()
             st.rerun()
-    with action_col2:
-        if st.button("Charger exemple alternatif", use_container_width=True):
+    with b:
+        if st.button("Exemple alternatif", use_container_width=True):
             st.session_state["active_example"] = ALT_EXAMPLE.copy()
             st.rerun()
-    with action_col3:
-        st.caption("Les champs sont groupés selon la structure du dataset.")
+    with c:
+        st.caption("Les variables sont structurées en trois familles : moyenne, erreur standard et pire valeur.")
 
     st.divider()
 
     with st.form("predict_form"):
-        feature_values: dict[str, float] = {}
-        form_cols = st.columns(3)
+        values: dict[str, float] = {}
+        input_cols = st.columns(3)
 
-        for col, (group_name, group_features) in zip(form_cols, FEATURE_GROUPS.items(), strict=True):
+        for col, (group_name, features) in zip(input_cols, FEATURE_GROUPS.items(), strict=True):
             with col:
                 st.markdown(f"### {group_name}")
-                for feature_name in group_features:
-                    feature_values[feature_name] = st.number_input(
-                        feature_name,
-                        value=float(st.session_state["active_example"][feature_name]),
+                for feature in features:
+                    values[feature] = st.number_input(
+                        feature,
+                        value=float(st.session_state["active_example"][feature]),
                         format="%.6f",
                     )
 
@@ -476,12 +586,12 @@ with tab_predict:
 
     if submitted:
         try:
-            result = call_api("POST", "/predict", api_url, json={"features": feature_values})
+            api_result = call_api("POST", "/predict", api_url, json={"features": values})
         except httpx.HTTPError as exc:
             st.error(f"Appel API impossible : {exc}")
             st.session_state["last_result"] = None
         else:
-            add_history(result, feature_values)
+            add_history(api_result, values)
 
     if st.session_state["last_result"]:
         result = st.session_state["last_result"]
@@ -492,192 +602,147 @@ with tab_predict:
         st.divider()
         st.subheader("Résultat")
 
-        res_col1, res_col2, res_col3, res_col4 = st.columns(4)
+        r1, r2, r3, r4 = st.columns(4)
+        if prediction == 1:
+            r1.error("Prédiction : maligne")
+        else:
+            r1.success("Prédiction : bénigne")
 
-        with res_col1:
-            if prediction == 1:
-                st.error("Prédiction : maligne")
-            else:
-                st.success("Prédiction : bénigne")
+        r2.metric("Probabilité malignité", f"{probability:.2%}")
+        r2.progress(min(max(probability, 0.0), 1.0))
 
-        with res_col2:
-            st.metric("Probabilité malignité", f"{probability:.2%}")
-            st.progress(min(max(probability, 0.0), 1.0))
+        r3.metric("Niveau", result["risk"])
+        r3.markdown(f'<span class="badge {badge}">{result["risk"]}</span>', unsafe_allow_html=True)
 
-        with res_col3:
-            st.metric("Niveau de risque", result["risk_band"])
-            st.markdown(
-                f'<span class="badge {badge}">{result["risk_band"]}</span>',
-                unsafe_allow_html=True,
-            )
+        r4.metric("Classe", prediction)
+        r4.metric("Heure", result["timestamp"].split(" ")[-1])
 
-        with res_col4:
-            st.metric("Heure", result["timestamp"].split(" ")[-1])
-            st.metric("Classe", prediction)
-
-        st.markdown("### Feedback utilisateur")
-        fb1, fb2, fb3 = st.columns(3)
-        if fb1.button("Prédiction correcte", use_container_width=True):
-            st.session_state["history"][0]["feedback"] = "correct"
-            st.success("Feedback enregistré.")
-        if fb2.button("Prédiction incorrecte", use_container_width=True):
-            st.session_state["history"][0]["feedback"] = "incorrect"
-            st.warning("Feedback enregistré.")
-        if fb3.button("Effacer l'historique", use_container_width=True):
+        if st.button("Effacer l'historique", use_container_width=True):
             st.session_state["history"] = []
             st.session_state["last_result"] = None
             st.rerun()
 
-    history = st.session_state.get("history", [])
-    if history:
+    if st.session_state["history"]:
         st.divider()
-        st.subheader("Historique de session")
-        st.dataframe(history_table(history), use_container_width=True, hide_index=True)
+        st.subheader("Historique")
+        st.dataframe(history_df(st.session_state["history"]), use_container_width=True, hide_index=True)
 
 with tab_experiments:
-    st.subheader("Comparaison des expérimentations")
+    st.subheader("Expériences MLflow")
 
     df_results = pd.DataFrame(MODEL_RESULTS)
-    best_idx = df_results["ROC-AUC"].idxmax()
-    best_model = df_results.loc[best_idx, "Modele"]
-    best_auc = df_results.loc[best_idx, "ROC-AUC"]
+    best_row = df_results.iloc[df_results["ROC-AUC"].idxmax()]
 
-    exp_col1, exp_col2, exp_col3 = st.columns(3)
-    exp_col1.metric("Meilleur modèle", best_model)
-    exp_col2.metric("Meilleur ROC-AUC", f"{best_auc:.3f}")
-    exp_col3.metric("Nombre d'approches", len(df_results))
+    e1, e2, e3 = st.columns(3)
+    e1.metric("Meilleur modèle", best_row["Modèle"])
+    e2.metric("Meilleur ROC-AUC", f"{best_row['ROC-AUC']:.3f}")
+    e3.metric("Approches", len(df_results))
 
     st.divider()
     table_col, chart_col = st.columns([1.1, 1])
 
     with table_col:
-        st.markdown("### Tableau de synthèse")
+        st.markdown("### Synthèse")
         st.dataframe(df_results, use_container_width=True, hide_index=True)
 
     with chart_col:
-        st.markdown("### ROC-AUC par modèle")
-        st.bar_chart(df_results.set_index("Modele")[["ROC-AUC"]], use_container_width=True)
+        st.markdown("### ROC-AUC")
+        st.bar_chart(df_results.set_index("Modèle")[["ROC-AUC"]], use_container_width=True)
 
     st.divider()
-    log1, log2, log3 = st.columns(3)
-    with log1:
-        st.markdown("#### Tracking")
-        st.markdown("- paramètres\n- métriques\n- artefacts\n- dataset")
-    with log2:
-        st.markdown("#### Optimisation")
-        st.markdown("- GridSearchCV\n- Optuna\n- validation croisée\n- comparaison")
-    with log3:
-        st.markdown("#### Registry")
-        st.markdown("- modèle sauvegardé\n- artefact joblib\n- versions\n- déploiement API")
+    x1, x2, x3 = st.columns(3)
+    x1.markdown("### Tracking\n- paramètres\n- métriques\n- artefacts")
+    x2.markdown("### Optimisation\n- GridSearchCV\n- Optuna\n- validation croisée")
+    x3.markdown("### Registry\n- modèle sauvegardé\n- artefact joblib\n- déploiement API")
 
     st.link_button("Ouvrir MLflow", MLFLOW_EXTERNAL_URL, use_container_width=True)
 
 with tab_model:
-    st.subheader("Informations du modèle servi par l'API")
+    st.subheader("Modèle servi par l'API")
 
     if not model_info:
-        st.error("Impossible de récupérer /model-info depuis l'API.")
+        st.error("Impossible de récupérer /model-info.")
     else:
-        mi1, mi2, mi3 = st.columns(3)
-        mi1.metric("Modèle disponible", "Oui" if model_info.get("model_exists") else "Non")
-        mi2.metric("Nombre de features", model_info.get("n_features", 0))
-        mi3.metric("Cible", model_info.get("target", "inconnue"))
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Modèle chargé", "Oui" if model_info.get("model_exists") else "Non")
+        m2.metric("Features", model_info.get("n_features", 0))
+        m3.metric("Cible", model_info.get("target", "inconnue"))
 
         st.divider()
-        fcol1, fcol2 = st.columns([1, 1])
-        with fcol1:
-            st.markdown("### Features numériques")
+        f1, f2 = st.columns([1, 1])
+        with f1:
+            st.markdown("### Variables")
             st.dataframe(
                 pd.DataFrame({"feature": model_info.get("numeric_features", list(DEFAULT_FEATURES))}),
                 use_container_width=True,
                 hide_index=True,
             )
-        with fcol2:
-            st.markdown("### Réponse brute /model-info")
+        with f2:
+            st.markdown("### Réponse API")
             st.json(model_info)
 
 with tab_architecture:
     st.subheader("Architecture technique")
 
-    arch_rows = [
-        {"Bloc": "Entraînement", "Fichier": "todo/mlproject/train.py", "Rôle": "baseline Logistic Regression"},
-        {"Bloc": "Comparaison", "Fichier": "todo/mlproject/train_models.py", "Rôle": "GridSearchCV multi-modèles"},
+    arch = [
+        {"Bloc": "Entraînement", "Fichier": "todo/mlproject/train.py", "Rôle": "baseline sklearn"},
+        {"Bloc": "Comparaison", "Fichier": "todo/mlproject/train_models.py", "Rôle": "GridSearchCV"},
         {"Bloc": "Optimisation", "Fichier": "todo/mlproject/train_optuna.py", "Rôle": "Optuna + MLflow"},
-        {"Bloc": "Tracking", "Fichier": "todo/mlproject/tracking.py", "Rôle": "centralisation MLflow"},
-        {"Bloc": "API", "Fichier": "todo/mlproject/api.py", "Rôle": "inférence FastAPI"},
+        {"Bloc": "Tracking", "Fichier": "todo/mlproject/tracking.py", "Rôle": "MLflow centralisé"},
+        {"Bloc": "API", "Fichier": "todo/mlproject/api.py", "Rôle": "FastAPI inference"},
         {"Bloc": "Frontend", "Fichier": "frontend/app.py", "Rôle": "dashboard Streamlit"},
-        {"Bloc": "Docker", "Fichier": "docker-compose.yml", "Rôle": "orchestration services"},
-        {"Bloc": "CI", "Fichier": ".github/workflows/ci.yml", "Rôle": "lint, types, tests, train"},
-        {"Bloc": "CD", "Fichier": ".github/workflows/cd.yml", "Rôle": "build/push image API GHCR"},
-        {"Bloc": "Cloud", "Fichier": "Oracle Cloud Instance", "Rôle": "déploiement public"},
+        {"Bloc": "Docker", "Fichier": "docker-compose.yml", "Rôle": "orchestration"},
+        {"Bloc": "CI", "Fichier": ".github/workflows/ci.yml", "Rôle": "lint, types, tests"},
+        {"Bloc": "CD", "Fichier": ".github/workflows/cd.yml", "Rôle": "GHCR"},
+        {"Bloc": "Cloud", "Fichier": "Oracle Cloud", "Rôle": "déploiement public"},
     ]
-
-    st.dataframe(pd.DataFrame(arch_rows), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(arch), use_container_width=True, hide_index=True)
 
     st.divider()
     d1, d2, d3 = st.columns(3)
-    with d1:
-        st.markdown("### Docker")
-        st.code(
-            "docker compose up -d mlflow\n"
-            "docker compose --profile train run --rm train\n"
-            "docker compose up -d api frontend",
-            language="bash",
-        )
-    with d2:
-        st.markdown("### API")
-        st.code("GET  /health\nGET  /model-info\nPOST /predict", language="http")
-    with d3:
-        st.markdown("### Ports")
-        st.code("MLflow    : 5000\nFastAPI   : 8000\nStreamlit : 8501", language="text")
+    d1.code("docker compose up -d mlflow\ndocker compose --profile train run --rm train\ndocker compose up -d api frontend", language="bash")
+    d2.code("GET  /health\nGET  /model-info\nPOST /predict", language="http")
+    d3.code("MLflow    : 5000\nFastAPI   : 8000\nStreamlit : 8501", language="text")
 
 with tab_monitoring:
     st.subheader("Monitoring de session")
 
-    current_history = st.session_state.get("history", [])
-    total = len(current_history)
-    malignant = sum(1 for item in current_history if int(item["prediction"]) == 1)
+    hist = st.session_state["history"]
+    total = len(hist)
+    malignant = sum(1 for item in hist if int(item["prediction"]) == 1)
     benign = total - malignant
 
-    mon1, mon2, mon3, mon4 = st.columns(4)
-    mon1.metric("Prédictions", total)
-    mon2.metric("Malignes", malignant)
-    mon3.metric("Bénignes", benign)
-    mon4.metric("API", "OK" if api_ok else "KO")
+    z1, z2, z3, z4 = st.columns(4)
+    z1.metric("Prédictions", total)
+    z2.metric("Malignes", malignant)
+    z3.metric("Bénignes", benign)
+    z4.metric("API", "OK" if api_ok else "KO")
 
     st.divider()
 
-    if current_history:
-        df_history = pd.DataFrame(current_history)
-        chart_col1, chart_col2 = st.columns(2)
+    if hist:
+        hdf = pd.DataFrame(hist)
 
-        with chart_col1:
+        g1, g2 = st.columns(2)
+        with g1:
             st.markdown("### Distribution des classes")
-            distribution = (
-                df_history["display_label"]
-                .value_counts()
-                .rename_axis("Classe")
-                .reset_index(name="Nombre")
-            )
+            distribution = hdf["label"].value_counts().rename_axis("Classe").reset_index(name="Nombre")
             st.bar_chart(distribution.set_index("Classe"), use_container_width=True)
 
-        with chart_col2:
+        with g2:
             st.markdown("### Probabilité de malignité")
             probability_df = pd.DataFrame(
                 {
-                    "prediction": list(range(1, len(current_history) + 1)),
-                    "probability_malignant": [
-                        item["probability_malignant"] for item in reversed(current_history)
-                    ],
+                    "prediction": list(range(1, len(hist) + 1)),
+                    "probability_malignant": [item["probability_malignant"] for item in reversed(hist)],
                 }
             ).set_index("prediction")
             st.line_chart(probability_df, use_container_width=True)
 
         st.divider()
-        st.markdown("### Données de monitoring")
-        st.dataframe(history_table(current_history), use_container_width=True, hide_index=True)
+        st.dataframe(history_df(hist), use_container_width=True, hide_index=True)
     else:
-        st.info("Aucune prédiction dans cette session. Lance une prédiction pour alimenter le monitoring.")
+        st.info("Lance une prédiction pour alimenter le monitoring.")
 
     st.divider()
     st.markdown("### État technique")
@@ -698,6 +763,6 @@ with tab_monitoring:
     )
 
 st.markdown(
-    '<div class="footer-note">Dashboard Streamlit du projet MLOps Breast Cancer Wisconsin.</div>',
+    '<div class="footer-note">Dashboard Streamlit · Projet MLOps Breast Cancer Wisconsin · Rym FOUZARI</div>',
     unsafe_allow_html=True,
 )
