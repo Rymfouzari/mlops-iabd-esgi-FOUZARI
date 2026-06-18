@@ -19,6 +19,11 @@ import streamlit as st
 
 API_URL = os.environ.get("API_URL", "http://127.0.0.1:8001")
 MLFLOW_EXTERNAL_URL = os.environ.get("MLFLOW_EXTERNAL_URL", "http://localhost:5001")
+API_DOCS_URL = os.environ.get("API_DOCS_URL", "http://localhost:8001/docs")
+GITHUB_URL = os.environ.get(
+    "GITHUB_URL",
+    "https://github.com/Rymfouzari/mlops-iabd-esgi-FOUZARI",
+)
 
 DEFAULT_FEATURES: dict[str, float] = {
     "mean radius": 17.99,
@@ -58,6 +63,49 @@ MODEL_RESULTS = [
     {"Modele": "RandomForest GridSearchCV", "F1": 0.963, "ROC-AUC": 0.993},
     {"Modele": "XGBoost GridSearchCV", "F1": 0.950, "ROC-AUC": 0.995},
     {"Modele": "LightGBM Optuna", "F1": None, "ROC-AUC": 0.995},
+]
+
+MLOPS_STEPS = [
+    {
+        "Etape": "1. Dataset",
+        "Description": "Chargement du Breast Cancer Wisconsin dataset",
+        "Fichier": "data.py / config.py",
+    },
+    {
+        "Etape": "2. Baseline",
+        "Description": "Regression logistique reproductible",
+        "Fichier": "train.py",
+    },
+    {
+        "Etape": "3. Tracking",
+        "Description": "Logging des parametres, metriques, artefacts et modeles",
+        "Fichier": "tracking.py",
+    },
+    {
+        "Etape": "4. Comparaison",
+        "Description": "Comparaison RandomForest, XGBoost et LightGBM",
+        "Fichier": "train_models.py",
+    },
+    {
+        "Etape": "5. Optimisation",
+        "Description": "Recherche automatique d'hyperparametres avec Optuna",
+        "Fichier": "train_optuna.py",
+    },
+    {
+        "Etape": "6. Serving",
+        "Description": "Exposition du modele via FastAPI",
+        "Fichier": "api.py",
+    },
+    {
+        "Etape": "7. Interface",
+        "Description": "Frontend Streamlit consommant l'API",
+        "Fichier": "frontend/app.py",
+    },
+    {
+        "Etape": "8. Industrialisation",
+        "Description": "Docker, CI GitHub Actions et CD vers GHCR",
+        "Fichier": "docker-compose.yml / .github/workflows",
+    },
 ]
 
 
@@ -124,7 +172,10 @@ with st.sidebar:
     st.metric("Nombre de variables", model_info.get("n_features", 0))
 
     st.divider()
+    st.markdown("## Liens utiles")
     st.link_button("Ouvrir MLflow", MLFLOW_EXTERNAL_URL, use_container_width=True)
+    st.link_button("Documentation API", API_DOCS_URL, use_container_width=True)
+    st.link_button("Depot GitHub", GITHUB_URL, use_container_width=True)
 
 # ---------------------------------------------------------------------------
 # Onglets
@@ -142,12 +193,13 @@ with tab_home:
     st.title("Breast Cancer Wisconsin - Classification binaire")
     st.markdown(
         """
-        Cette application expose un modele de classification binaire capable de predire
-        si une tumeur est **benigne** ou **maligne** a partir de mesures numeriques
-        extraites d'images medicales.
+        Cette application presente une chaine **MLOps complete** appliquee a un probleme
+        de classification medicale : predire si une tumeur est **benigne** ou **maligne**
+        a partir de 30 mesures numeriques.
 
-        Le frontend Streamlit appelle une API FastAPI qui charge le modele entraine
-        depuis `models/model.joblib`.
+        Le modele est entraine avec scikit-learn, suivi avec MLflow, optimise avec Optuna,
+        expose par FastAPI, consomme par Streamlit, conteneurise avec Docker et deployee
+        sur Oracle Cloud.
         """
     )
 
@@ -158,6 +210,11 @@ with tab_home:
     col2.metric("Features", "30")
     col3.metric("Type", "Classification")
     col4.metric("Cible", "0 / 1")
+
+    st.divider()
+
+    st.subheader("Pipeline MLOps du projet")
+    st.dataframe(pd.DataFrame(MLOPS_STEPS), use_container_width=True, hide_index=True)
 
     st.divider()
 
@@ -182,7 +239,8 @@ with tab_home:
             - **API** : FastAPI
             - **Frontend** : Streamlit
             - **Conteneurisation** : Docker Compose
-            - **CI/CD** : GitHub Actions
+            - **CI/CD** : GitHub Actions + GHCR
+            - **Deploiement** : Oracle Cloud
             """
         )
 
@@ -315,7 +373,7 @@ with tab_predict:
                 }
                 for item in history
             ]
-            st.dataframe(pd.DataFrame(rows), use_container_width=True)
+            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
             if st.button("Effacer l'historique"):
                 st.session_state["history"] = []
@@ -337,12 +395,14 @@ with tab_experiments:
     )
 
     st.link_button("Ouvrir MLflow UI", MLFLOW_EXTERNAL_URL, use_container_width=True)
+    st.link_button("Ouvrir API Docs", API_DOCS_URL, use_container_width=True)
+    st.link_button("Ouvrir GitHub", GITHUB_URL, use_container_width=True)
 
     st.divider()
     st.subheader("Resultats principaux")
 
     df_results = pd.DataFrame(MODEL_RESULTS)
-    st.dataframe(df_results, use_container_width=True)
+    st.dataframe(df_results, use_container_width=True, hide_index=True)
 
     chart_df = df_results.set_index("Modele")[["ROC-AUC"]]
     st.bar_chart(chart_df, use_container_width=True)
@@ -418,7 +478,7 @@ with tab_architecture:
         },
     ]
 
-    st.dataframe(pd.DataFrame(architecture_rows), use_container_width=True)
+    st.dataframe(pd.DataFrame(architecture_rows), use_container_width=True, hide_index=True)
 
     st.divider()
     st.subheader("Services Docker")
@@ -429,6 +489,15 @@ with tab_architecture:
         - `api` : service FastAPI d'inference
         - `frontend` : interface Streamlit
         """
+    )
+
+    st.divider()
+    st.subheader("Commandes principales")
+    st.code(
+        """docker compose up -d mlflow
+docker compose --profile train run --rm train
+docker compose up -d api frontend""",
+        language="bash",
     )
 
 # ===========================================================================
@@ -473,5 +542,11 @@ with tab_monitoring:
         st.bar_chart(df_distribution.set_index("Classe"), use_container_width=True)
 
     st.divider()
+    st.subheader("Etat API / modele")
+    st.json({"health": health, "model_info": info})
+
+    st.divider()
     st.subheader("Liens utiles")
     st.link_button("Ouvrir MLflow UI", MLFLOW_EXTERNAL_URL, use_container_width=True)
+    st.link_button("Ouvrir API Docs", API_DOCS_URL, use_container_width=True)
+    st.link_button("Ouvrir GitHub", GITHUB_URL, use_container_width=True)
