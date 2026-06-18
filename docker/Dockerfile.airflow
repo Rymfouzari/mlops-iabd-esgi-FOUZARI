@@ -16,4 +16,5 @@ RUN pip install --no-cache-dir \
     xgboost \
     lightgbm \
     pandas \
-    numpy
+    numpy \
+    shap
