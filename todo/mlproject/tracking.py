@@ -40,13 +40,15 @@ def log_metrics(metrics: dict[str, float]) -> None:
 
 
 def log_model(model: Any, name: str = "model") -> None:
-    """Loggue un modele scikit-learn dans MLflow."""
     mlflow.sklearn.log_model(
         model,
         name=name,
         skops_trusted_types=[
             "xgboost.core.Booster",
             "xgboost.sklearn.XGBClassifier",
+            "lightgbm.basic.Booster",
+            "lightgbm.sklearn.LGBMClassifier",
+            "collections.OrderedDict",
         ],
     )
 
