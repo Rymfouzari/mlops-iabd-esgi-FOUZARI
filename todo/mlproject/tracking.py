@@ -22,7 +22,7 @@ def log_dataset(df: pd.DataFrame, context: str = "training") -> None:
     mlflow.log_param(f"{context}_columns", df.shape[1])
     mlflow.log_param(f"{context}_missing_values", int(df.isna().sum().sum()))
 
-    dataset = mlflow.data.from_pandas(# type: ignore[attr-defined]
+    dataset = mlflow.data.from_pandas(  # type: ignore[attr-defined]
         df,
         name="breast_cancer",
     )
@@ -40,17 +40,8 @@ def log_metrics(metrics: dict[str, float]) -> None:
 
 
 def log_model(model: Any, name: str = "model") -> None:
-    mlflow.sklearn.log_model(
-        model,
-        name=name,
-        skops_trusted_types=[
-            "xgboost.core.Booster",
-            "xgboost.sklearn.XGBClassifier",
-            "lightgbm.basic.Booster",
-            "lightgbm.sklearn.LGBMClassifier",
-            "collections.OrderedDict",
-        ],
-    )
+    """Loggue un modele scikit-learn dans MLflow."""
+    mlflow.sklearn.log_model(model, name=name)
 
 
 def log_artifact(path: str) -> None:
