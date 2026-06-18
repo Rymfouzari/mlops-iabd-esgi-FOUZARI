@@ -1,4 +1,3 @@
-
 """Frontend Streamlit pour l'API Breast Cancer Classification.
 
 Seance 14 bis - TP Streamlit
@@ -54,6 +53,13 @@ DEFAULT_FEATURES: dict[str, float] = {
     "worst fractal dimension": 0.1189,
 }
 
+MODEL_RESULTS = [
+    {"Modele": "Baseline Logistic Regression", "F1": 0.951, "ROC-AUC": 0.996},
+    {"Modele": "RandomForest GridSearchCV", "F1": 0.963, "ROC-AUC": 0.993},
+    {"Modele": "XGBoost GridSearchCV", "F1": 0.950, "ROC-AUC": 0.995},
+    {"Modele": "LightGBM Optuna", "F1": None, "ROC-AUC": 0.995},
+]
+
 
 def call_api(method: str, path: str, api_url: str, **kwargs: Any) -> dict[str, Any]:
     """Appelle l'API FastAPI et retourne la reponse JSON."""
@@ -95,6 +101,10 @@ st.set_page_config(
 
 init_session_state()
 
+# ---------------------------------------------------------------------------
+# Sidebar
+# ---------------------------------------------------------------------------
+
 with st.sidebar:
     st.markdown("## Configuration")
     api_url = st.text_input("URL de l'API", value=API_URL)
@@ -116,10 +126,17 @@ with st.sidebar:
     st.divider()
     st.link_button("Ouvrir MLflow", MLFLOW_EXTERNAL_URL, use_container_width=True)
 
+# ---------------------------------------------------------------------------
+# Onglets
+# ---------------------------------------------------------------------------
 
-tab_home, tab_predict, tab_model, tab_monitoring = st.tabs(
-    ["Accueil", "Prediction", "Modele", "Monitoring"]
+tab_home, tab_predict, tab_experiments, tab_architecture, tab_monitoring = st.tabs(
+    ["Accueil", "Prediction", "Experiences", "Architecture", "Monitoring"]
 )
+
+# ===========================================================================
+# ACCUEIL
+# ===========================================================================
 
 with tab_home:
     st.title("Breast Cancer Wisconsin - Classification binaire")
@@ -169,10 +186,24 @@ with tab_home:
             """
         )
 
+    st.divider()
+    st.subheader("Pipeline MLOps du projet")
+    st.markdown(
+        """
+        `Dataset` → `Baseline` → `MLflow Tracking` → `GridSearchCV` →
+        `Optuna` → `Model Registry` → `FastAPI` → `Streamlit` →
+        `Docker Compose` → `CI/CD`
+        """
+    )
+
     with st.expander("Voir les 30 variables utilisees par le modele"):
         cols = st.columns(3)
         for i, feature in enumerate(DEFAULT_FEATURES):
             cols[i % 3].markdown(f"- `{feature}`")
+
+# ===========================================================================
+# PREDICTION
+# ===========================================================================
 
 with tab_predict:
     st.title("Tester une prediction")
@@ -291,26 +322,118 @@ with tab_predict:
                 st.session_state["last_result"] = None
                 st.rerun()
 
-with tab_model:
-    st.title("Informations du modele")
+# ===========================================================================
+# EXPERIENCES
+# ===========================================================================
 
-    info = fetch_model_info(api_url)
+with tab_experiments:
+    st.title("Experiences MLflow")
 
-    if not info:
-        st.error("Impossible de recuperer les informations du modele.")
-    else:
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Modele charge", "Oui" if info.get("model_exists") else "Non")
-        col2.metric("Nombre de features", info.get("n_features", 0))
-        col3.metric("Cible", info.get("target", "inconnue"))
+    st.markdown(
+        """
+        Cette section resume les experimentations realisees pendant le projet.
+        Les runs detailles sont consultables directement dans l'interface MLflow.
+        """
+    )
 
-        st.divider()
-        st.subheader("Features numeriques")
-        st.dataframe(pd.DataFrame({"feature": info.get("numeric_features", [])}))
+    st.link_button("Ouvrir MLflow UI", MLFLOW_EXTERNAL_URL, use_container_width=True)
 
-        st.divider()
-        st.subheader("Reponse complete de l'API")
-        st.json(info)
+    st.divider()
+    st.subheader("Resultats principaux")
+
+    df_results = pd.DataFrame(MODEL_RESULTS)
+    st.dataframe(df_results, use_container_width=True)
+
+    chart_df = df_results.set_index("Modele")[["ROC-AUC"]]
+    st.bar_chart(chart_df, use_container_width=True)
+
+    st.divider()
+    st.subheader("Ce qui est logge dans MLflow")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown(
+            """
+            - Parametres d'entrainement
+            - Metriques F1 et ROC-AUC
+            - Dataset d'entrainement
+            - Modele serialise
+            """
+        )
+
+    with col2:
+        st.markdown(
+            """
+            - Matrice de confusion
+            - Artefacts SHAP
+            - Trials Optuna
+            - Model Registry
+            """
+        )
+
+# ===========================================================================
+# ARCHITECTURE
+# ===========================================================================
+
+with tab_architecture:
+    st.title("Architecture MLOps")
+
+    st.subheader("Role des principaux fichiers")
+    architecture_rows = [
+        {
+            "Fichier": "train.py",
+            "Role": "entraine la baseline Logistic Regression",
+        },
+        {
+            "Fichier": "train_models.py",
+            "Role": "compare plusieurs familles de modeles avec GridSearchCV",
+        },
+        {
+            "Fichier": "train_optuna.py",
+            "Role": "optimise RandomForest, XGBoost et LightGBM avec Optuna",
+        },
+        {
+            "Fichier": "tracking.py",
+            "Role": "centralise le logging MLflow",
+        },
+        {
+            "Fichier": "api.py",
+            "Role": "expose le modele via FastAPI",
+        },
+        {
+            "Fichier": "frontend/app.py",
+            "Role": "interface utilisateur Streamlit",
+        },
+        {
+            "Fichier": "docker-compose.yml",
+            "Role": "orchestre MLflow, entrainement, API et frontend",
+        },
+        {
+            "Fichier": ".github/workflows/ci.yml",
+            "Role": "execute lint, types, tests et entrainement baseline",
+        },
+        {
+            "Fichier": ".github/workflows/cd.yml",
+            "Role": "build et push l'image Docker de l'API vers GHCR",
+        },
+    ]
+
+    st.dataframe(pd.DataFrame(architecture_rows), use_container_width=True)
+
+    st.divider()
+    st.subheader("Services Docker")
+    st.markdown(
+        """
+        - `mlflow` : suivi des experiences
+        - `train` : entrainement one-shot du modele
+        - `api` : service FastAPI d'inference
+        - `frontend` : interface Streamlit
+        """
+    )
+
+# ===========================================================================
+# MONITORING
+# ===========================================================================
 
 with tab_monitoring:
     st.title("Monitoring local")
@@ -336,6 +459,18 @@ with tab_monitoring:
     col1.metric("Predictions session", total)
     col2.metric("Malignes", malignant)
     col3.metric("Benignes", benign)
+
+    if history:
+        st.divider()
+        st.subheader("Distribution des predictions")
+        df_history = pd.DataFrame(history)
+        df_distribution = (
+            df_history["label"]
+            .value_counts()
+            .rename_axis("Classe")
+            .reset_index(name="Nombre")
+        )
+        st.bar_chart(df_distribution.set_index("Classe"), use_container_width=True)
 
     st.divider()
     st.subheader("Liens utiles")
