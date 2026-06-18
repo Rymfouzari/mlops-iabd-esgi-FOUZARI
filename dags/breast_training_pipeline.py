@@ -10,6 +10,8 @@ from airflow.operators.bash import BashOperator
 DEFAULT_ENV = {
     "PYTHONPATH": "/opt/airflow/todo",
     "MLFLOW_TRACKING_URI": "http://mlflow:5000",
+    "GIT_PYTHON_REFRESH": "quiet",
+    "LOKY_MAX_CPU_COUNT": "1",
 }
 
 with DAG(
@@ -40,7 +42,7 @@ with DAG(
 
     train_optuna = BashOperator(
         task_id="train_optuna",
-        bash_command="python -m mlproject.train_optuna --n-trials ${N_TRIALS:-5} --cv ${CV:-2}",
+        bash_command="python -m mlproject.train_optuna --n-trials ${N_TRIALS:-5} --cv ${CV:-2} --no-mlflow",
         env=DEFAULT_ENV,
     )
 
