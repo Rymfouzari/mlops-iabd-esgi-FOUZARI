@@ -159,3 +159,20 @@ test: ## Lance les tests (pytest)
 	PYTHONPATH=todo $(RUN) pytest
 
 check: lint type test ## Workflow qualite complet (lint + types + tests)
+# ==============================================================================
+# Airflow / Orchestration
+# ==============================================================================
+
+airflow-build: ## Construit l'image Airflow
+	docker compose build airflow
+
+airflow-up: ## Demarre Airflow avec MLflow, API et frontend
+	docker compose up -d --build mlflow api frontend airflow
+
+airflow-down: ## Arrete Airflow
+	docker compose stop airflow
+
+workflow-docker: ## Lance la stack MLOps complete avec Airflow
+	docker compose up -d --build mlflow
+	docker compose --profile train run --rm train
+	docker compose up -d --build api frontend airflow

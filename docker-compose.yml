@@ -1,18 +1,3 @@
-# Seance 14 - TP docker-compose : orchestrez votre stack de classification.
-# Squelette a completer (marqueurs TODO S14-n). Voir tp/TP_S14_docker_compose.md.
-#
-# Services : mlflow (suivi), train (entrainement one-shot, profil "train"),
-#            api (FastAPI) et frontend (Streamlit).
-#
-# Commandes (depuis la racine du projet) :
-#   docker compose up -d mlflow
-#   docker compose --profile train run --rm train
-#   docker compose up -d api frontend
-#API sur http://localhost:8001
-#frontend sur http://localhost:8501
-#MLflow sur http://localhost:5001
-#   -> API sur http://localhost:8000, frontend sur http://localhost:8501
-
 services:
   mlflow:
     image: ghcr.io/mlflow/mlflow:v3.13.0
@@ -73,6 +58,43 @@ services:
     depends_on:
       api:
         condition: service_healthy
+
+  airflow:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.airflow
+    command: >
+      bash -c "
+      airflow db migrate &&
+      airflow users create
+      --username admin
+      --password admin
+      --firstname Rym
+      --lastname Fouzari
+      --role Admin
+      --email admin@example.com || true &&
+      airflow standalone
+      "
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+      PYTHONPATH: /opt/airflow/todo
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      API_URL: http://api:8000
+      N_TRIALS: "5"
+      CV: "2"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./todo:/opt/airflow/todo
+      - ./data:/opt/airflow/data
+      - models_data:/opt/airflow/models
+    depends_on:
+      api:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
 
 volumes:
   mlflow_data:
