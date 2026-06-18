@@ -362,15 +362,11 @@ def log_family_to_mlflow(
 
         signature = infer_signature(x_test, result.best_pipeline.predict(x_test))
         _model_info = mlflow.sklearn.log_model(
-            model,
+            result.best_pipeline,
             name="model",
-            skops_trusted_types=[
-                "xgboost.core.Booster",
-                "xgboost.sklearn.XGBClassifier",
-                "lightgbm.basic.Booster",
-                "lightgbm.sklearn.LGBMClassifier",
-                "collections.OrderedDict",
-            ],
+            signature=signature,
+            input_example=x_test.iloc[:5],
+            registered_model_name=register_as,
         )
 
         # TODO (S6-7 bonus) : renommez _model_info en model_info ; si register_as
