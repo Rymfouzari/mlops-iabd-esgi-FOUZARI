@@ -1,41 +1,71 @@
 # Projet MLOps – Classification du cancer du sein (Breast Cancer Wisconsin)
 
-## Problématique
+## Présentation
 
-L'objectif du projet est de mettre en œuvre une chaîne MLOps complète sur un problème de classification binaire : prédire si une tumeur est maligne ou bénigne à partir de caractéristiques extraites d'images médicales.
+Ce projet a pour objectif de mettre en œuvre une chaîne MLOps complète autour d'un problème de classification binaire : prédire si une tumeur est bénigne ou maligne à partir de caractéristiques extraites d'images médicales.
 
-Au-delà de la performance prédictive, le projet vise à appliquer les différentes briques étudiées durant le module :
+L'application couvre l'ensemble du cycle de vie d'un modèle de Machine Learning :
 
-* reproductibilité ;
-* suivi des expérimentations ;
-* comparaison de modèles ;
-* optimisation automatique d'hyperparamètres ;
-* exposition du modèle via une API ;
-* intégration continue ;
-* conteneurisation.
+* préparation et validation des données ;
+* entraînement et optimisation des modèles ;
+* suivi des expérimentations avec MLflow ;
+* interprétabilité avec SHAP ;
+* exposition via une API FastAPI ;
+* visualisation via une interface Streamlit ;
+* orchestration avec Apache Airflow ;
+* intégration continue avec GitHub Actions ;
+* déploiement conteneurisé avec Docker ;
+* hébergement sur Oracle Cloud Infrastructure.
 
 ---
 
-## Choix du dataset
+# Architecture MLOps
+
+```text
+                           ┌──────────────┐
+                           │   Airflow    │
+                           │ Orchestration│
+                           └──────┬───────┘
+                                  │
+          ┌───────────────────────┼───────────────────────┐
+          │                       │                       │
+          ▼                       ▼                       ▼
+
+ ┌────────────────┐    ┌────────────────┐    ┌────────────────┐
+ │   Training     │    │    FastAPI     │    │   Streamlit    │
+ │  & Optuna      │    │   Inference    │    │   Dashboard    │
+ └───────┬────────┘    └───────┬────────┘    └────────────────┘
+         │                     │
+         ▼                     │
+ ┌────────────────┐            │
+ │    MLflow      │◄───────────┘
+ │ Experiment     │
+ │ Tracking       │
+ └────────────────┘
+```
+
+L'ensemble des services est déployé via Docker Compose sur une machine virtuelle Oracle Cloud.
+
+---
+
+# Choix du dataset
 
 Le dataset Breast Cancer Wisconsin a été retenu pour plusieurs raisons :
 
 * problème de classification binaire clairement défini ;
 * taille raisonnable permettant des expérimentations rapides ;
 * variables exclusivement numériques ;
-* forte utilisation dans la littérature, facilitant l'interprétation des résultats.
+* forte utilisation dans la littérature scientifique.
 
-Le jeu de données contient :
+Le dataset contient :
 
 * 569 observations ;
 * 30 variables descriptives ;
-* une cible binaire (maligne / bénigne).
-
-Ce choix nous a permis de concentrer le travail sur les aspects MLOps plutôt que sur des problématiques complexes de nettoyage de données.
+* une cible binaire (malignant / benign).
 
 ---
 
-## Construction de la baseline
+# Construction de la baseline
 
 Une première baseline a été développée à l'aide d'une régression logistique intégrée dans un pipeline scikit-learn.
 
@@ -46,144 +76,107 @@ Le pipeline comprend :
 * entraînement du modèle ;
 * sauvegarde du modèle entraîné.
 
-### Résultats
+## Résultats
 
 | Métrique | Valeur |
 | -------- | -----: |
 | F1-score |  0.951 |
 | ROC-AUC  |  0.996 |
 
-### Analyse
-
-La baseline atteint déjà des performances très élevées. Le ROC-AUC proche de 1 indique que les deux classes sont fortement séparables dans l'espace des caractéristiques.
-
-Cette observation suggère que les gains obtenus par des modèles plus complexes risquent d'être limités.
+La baseline atteint déjà d'excellentes performances, indiquant une bonne séparabilité des classes.
 
 ---
 
-## Mise en place du suivi des expériences
+# Suivi des expériences avec MLflow
 
-Le suivi des expériences a été réalisé avec MLflow.
+Le suivi des expérimentations a été réalisé avec MLflow.
 
-Un module dédié (`tracking.py`) a été développé afin de centraliser :
+Un module dédié centralise :
 
 * la configuration du serveur MLflow ;
+* le suivi des datasets ;
 * l'enregistrement des paramètres ;
 * l'enregistrement des métriques ;
-* le suivi des datasets ;
-* l'enregistrement des modèles ;
-* la sauvegarde des artefacts.
+* la sauvegarde des modèles ;
+* la gestion des artefacts.
 
-Cette centralisation permet de réutiliser les mêmes mécanismes de suivi dans tous les scripts d'entraînement.
+Chaque exécution enregistre :
 
-### Informations enregistrées
-
-Chaque run MLflow contient :
-
-* les hyperparamètres du modèle ;
-* les métriques d'évaluation ;
-* les artefacts générés ;
-* le modèle entraîné ;
-* les informations de reproductibilité.
+* hyperparamètres ;
+* métriques ;
+* modèle entraîné ;
+* artefacts générés ;
+* informations de reproductibilité.
 
 ---
 
-## Comparaison de plusieurs familles de modèles
+# Comparaison de modèles
 
-Nous avons comparé plusieurs approches :
+Plusieurs familles de modèles ont été évaluées :
 
 * Régression Logistique ;
 * Random Forest ;
 * XGBoost ;
 * LightGBM.
 
-Chaque modèle a été évalué à l'aide de GridSearchCV afin d'identifier les meilleurs hyperparamètres dans une grille prédéfinie.
+Les recherches d'hyperparamètres ont été réalisées avec GridSearchCV.
 
-Les résultats et paramètres optimaux sont automatiquement enregistrés dans MLflow.
-
-### Observations
-
-Les différentes familles de modèles obtiennent des performances très proches.
-
-Les écarts observés restent faibles, ce qui confirme que le dataset est relativement facile à classifier.
-
-Les méthodes basées sur les arbres obtiennent cependant des ROC-AUC légèrement supérieurs à la régression logistique.
+Les résultats sont automatiquement enregistrés dans MLflow afin de comparer les performances et les paramètres optimaux.
 
 ---
 
-## Optimisation automatique avec Optuna
+# Optimisation automatique avec Optuna
 
-Afin de dépasser l'approche Grid Search, nous avons mis en place une optimisation automatique des hyperparamètres avec Optuna.
+Une étape d'optimisation automatique a été mise en place avec Optuna.
 
-Trois familles ont été optimisées :
+Les familles optimisées sont :
 
 * Random Forest ;
 * XGBoost ;
 * LightGBM.
 
-Chaque étude Optuna est suivie dans MLflow :
+Chaque étude Optuna enregistre :
 
-* suivi des essais (trials) ;
-* paramètres testés ;
-* score ROC-AUC obtenu ;
-* modèle final sélectionné.
+* les essais réalisés ;
+* les paramètres testés ;
+* les scores ROC-AUC obtenus ;
+* le modèle sélectionné.
 
-L'organisation des runs MLflow permet de visualiser :
-
-* l'étude globale ;
-* chaque famille de modèles ;
-* chaque essai Optuna individuellement.
-
-### Résultats
-
-Après optimisation, LightGBM a obtenu les meilleures performances globales.
-
-### Conclusion
-
-L'apport principal d'Optuna n'a pas été une amélioration spectaculaire du score, mais l'automatisation de la recherche d'hyperparamètres et la traçabilité complète des expérimentations.
+Cette approche permet une recherche plus efficace que les grilles classiques.
 
 ---
 
-## Interprétabilité avec SHAP
+# Interprétabilité avec SHAP
 
-Afin d'améliorer la compréhension du comportement des modèles, des graphiques SHAP ont été intégrés au pipeline d'évaluation.
+Des visualisations SHAP ont été intégrées afin d'améliorer la compréhension des prédictions.
 
-Les valeurs SHAP permettent :
+Les graphiques permettent :
 
-* d'identifier les variables les plus influentes ;
-* d'expliquer les prédictions du modèle ;
-* de faciliter l'interprétation métier des résultats.
+* d'identifier les variables les plus importantes ;
+* d'expliquer les décisions du modèle ;
+* de faciliter l'interprétation métier.
 
-Les graphiques sont automatiquement enregistrés comme artefacts dans MLflow.
-
-Cette étape améliore la transparence du modèle et facilite l'analyse des facteurs contribuant aux prédictions.
+Les figures sont automatiquement sauvegardées dans MLflow.
 
 ---
 
-## Exposition du modèle via une API FastAPI
+# API FastAPI
 
-Une API REST a été développée avec FastAPI afin de rendre le modèle utilisable par des applications externes.
+Une API REST a été développée avec FastAPI.
 
-L'API charge automatiquement le modèle entraîné enregistré dans `models/model.joblib`.
+Le modèle est chargé automatiquement depuis :
 
-### Endpoints disponibles
+```text
+models/model.joblib
+```
 
-| Endpoint      | Méthode | Description                                     |
-| ------------- | ------- | ----------------------------------------------- |
-| `/health`     | GET     | Vérifie que l'API est opérationnelle            |
-| `/model-info` | GET     | Affiche les informations du modèle chargé       |
-| `/predict`    | POST    | Réalise une prédiction sur de nouvelles données |
+## Endpoints disponibles
 
-### Fonctionnement
-
-Le client envoie les caractéristiques d'une tumeur au format JSON.
-
-L'API :
-
-1. valide les données reçues ;
-2. applique le pipeline de prétraitement ;
-3. exécute la prédiction ;
-4. renvoie la classe prédite ainsi que la probabilité associée.
+| Endpoint    | Méthode | Description                  |
+| ----------- | ------- | ---------------------------- |
+| /health     | GET     | Vérification du service      |
+| /model-info | GET     | Informations du modèle       |
+| /predict    | POST    | Réalisation d'une prédiction |
 
 Exemple de réponse :
 
@@ -195,115 +188,170 @@ Exemple de réponse :
 }
 ```
 
-Cette API constitue l'interface de déploiement du modèle et permet une utilisation en temps réel.
+---
+
+# Dashboard Streamlit
+
+Une interface Streamlit a été développée afin de :
+
+* réaliser des prédictions interactives ;
+* consulter les performances du modèle ;
+* visualiser l'architecture MLOps ;
+* accéder rapidement aux services du projet ;
+* suivre l'état du système.
+
+Le dashboard constitue l'interface utilisateur principale du projet.
 
 ---
 
-## Tests de l'API
+# Orchestration avec Apache Airflow
 
-Un client Python de test a été développé afin de valider automatiquement le bon fonctionnement de l'API.
+Apache Airflow a été intégré afin d'automatiser les workflows MLOps.
 
-Le script :
+## Pipeline d'entraînement
 
-* vérifie l'état de l'API via `/health` ;
-* envoie plusieurs observations du dataset à `/predict` ;
-* récupère les informations du modèle via `/model-info`.
+DAG :
 
-Cette étape permet de s'assurer que :
+```text
+breast_training_pipeline
+```
 
-* le modèle est correctement chargé ;
-* les prédictions sont produites sans erreur ;
-* l'interface REST reste stable après chaque modification du projet.
+Workflow :
 
----
+```text
+validate_dataset
+        ↓
+train_baseline
+        ↓
+train_optuna
+```
 
-## Intégration Continue (CI)
+Ce pipeline :
 
-Un pipeline GitHub Actions a été mis en place afin d'automatiser les contrôles qualité du projet.
+* valide les données ;
+* entraîne la baseline ;
+* lance l'optimisation Optuna ;
+* génère le modèle final.
 
-À chaque push ou pull request, le workflow exécute automatiquement :
+## Pipeline de prédiction
 
-* Ruff pour l'analyse statique du code ;
-* MyPy pour la vérification des types ;
-* Pytest pour l'exécution des tests.
+DAG :
 
-Le pipeline comporte également une étape d'entraînement automatique qui :
+```text
+breast_predict_pipeline
+```
 
-* exécute la baseline ;
-* génère le modèle ;
-* publie le modèle comme artefact GitHub Actions.
+Workflow :
 
-Cette approche garantit que le projet reste fonctionnel après chaque modification du code.
+```text
+check_api_health
+        ↓
+run_predict_client
+```
 
----
+Ce pipeline :
 
-## Conteneurisation avec Docker
-
-L'application a été conteneurisée afin de garantir la reproductibilité de l'environnement d'exécution.
-
-### Services Docker
-
-Le projet s'appuie sur plusieurs conteneurs :
-
-* MLflow pour le suivi des expérimentations ;
-* un conteneur d'entraînement ;
-* une API FastAPI pour l'inférence.
-
-### Docker Compose
-
-Docker Compose permet d'orchestrer l'ensemble des services :
-
-* démarrage de MLflow ;
-* entraînement du modèle ;
-* partage du modèle entraîné via des volumes Docker ;
-* exposition de l'API.
-
-Cette architecture facilite la reproduction complète du projet sur une autre machine.
+* vérifie la disponibilité de l'API ;
+* envoie plusieurs requêtes de test ;
+* valide le fonctionnement complet du service d'inférence.
 
 ---
 
-## Architecture du projet
+# Tests automatisés
+
+Le projet inclut :
+
+* tests unitaires ;
+* validation des pipelines ;
+* vérification des endpoints FastAPI ;
+* tests d'intégration.
+
+Pytest est utilisé comme framework principal.
+
+---
+
+# Intégration Continue (CI)
+
+GitHub Actions exécute automatiquement :
+
+* Ruff ;
+* MyPy ;
+* Pytest ;
+* génération du modèle ;
+* publication des artefacts.
+
+Chaque modification est ainsi validée automatiquement.
+
+---
+
+# Conteneurisation Docker
+
+Le projet repose sur plusieurs services Docker :
+
+* MLflow ;
+* API FastAPI ;
+* Dashboard Streamlit ;
+* Apache Airflow ;
+* conteneur d'entraînement.
+
+Docker Compose orchestre l'ensemble des composants.
+
+---
+
+# Déploiement Oracle Cloud
+
+L'application est déployée sur une machine virtuelle Oracle Cloud.
+
+## Services exposés
+
+| Service           | URL                          |
+| ----------------- | ---------------------------- |
+| Streamlit         | http://88.96.61.63:8501      |
+| FastAPI           | http://88.96.61.63:8000      |
+| Documentation API | http://88.96.61.63:8000/docs |
+| MLflow            | http://88.96.61.63:5000      |
+| Airflow           | http://88.96.61.63:8080      |
+
+---
+
+# Structure du projet
 
 ```text
 .
+├── dags/
 ├── data/
-├── models/
 ├── docker/
+│   ├── Dockerfile.api
+│   ├── Dockerfile.frontend
 │   ├── Dockerfile.train
-│   └── Dockerfile.api
+│   └── Dockerfile.airflow
+├── frontend/
+├── models/
+├── tests/
 ├── todo/
 │   ├── mlproject/
-│   │   ├── api.py
-│   │   ├── config.py
-│   │   ├── data.py
-│   │   ├── evaluation.py
-│   │   ├── features.py
-│   │   ├── tracking.py
-│   │   ├── train.py
-│   │   ├── train_models.py
-│   │   └── train_optuna.py
 │   └── scripts/
-│       └── predict_client.py
-├── tests/
 ├── docker-compose.yml
 ├── Makefile
+├── pyproject.toml
 └── README.md
 ```
 
 ---
 
-## Conclusion
+# Conclusion
 
-Le projet dispose désormais :
+Le projet implémente une chaîne MLOps complète couvrant :
 
-* d'une baseline reproductible ;
-* d'un suivi MLflow complet ;
-* d'une comparaison de modèles ;
-* d'une optimisation automatique avec Optuna ;
-* d'une interprétabilité via SHAP ;
-* d'une API de prédiction ;
-* de tests automatisés ;
-* d'un pipeline CI GitHub Actions ;
-* d'une conteneurisation Docker.
+* la préparation des données ;
+* l'entraînement de modèles ;
+* l'optimisation d'hyperparamètres ;
+* l'interprétabilité ;
+* le suivi d'expériences ;
+* le déploiement d'une API ;
+* la supervision via Streamlit ;
+* l'orchestration via Airflow ;
+* la conteneurisation Docker ;
+* le déploiement Cloud.
 
-L'ensemble constitue une chaîne MLOps complète couvrant les principales étapes du cycle de vie d'un modèle de machine learning, depuis l'entraînement jusqu'à son exposition sous forme de service utilisable en production.
+Il constitue une plateforme de démonstration complète des bonnes pratiques MLOps appliquées à un cas réel de classification médicale.
