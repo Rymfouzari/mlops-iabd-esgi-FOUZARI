@@ -36,7 +36,7 @@ MODELS = {
         XGBClassifier(
             random_state=RANDOM_STATE,
             eval_metric="logloss",
-            n_jobs=-1,
+            n_jobs=1,
         ),
         {
             "clf__n_estimators": [50, 100],
@@ -80,7 +80,7 @@ def train_all() -> None:
                 param_grid=param_grid,
                 cv=5,
                 scoring="roc_auc",
-                n_jobs=-1,
+                n_jobs=1,
             )
             search.fit(x_train, y_train)
 
