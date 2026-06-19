@@ -8,8 +8,8 @@ services:
       --backend-store-uri sqlite:////mlflow/mlflow.db
       --artifacts-destination /mlflow/artifacts
       --serve-artifacts
-      --allowed-hosts "mlflow,mlflow:5000,localhost,localhost:5000,127.0.0.1,127.0.0.1:5000,88.96.61.63,88.96.61.63:5000"
-      --cors-allowed-origins "http://localhost:5000,http://127.0.0.1:5000,http://88.96.61.63:5000"
+      --allowed-hosts "mlflow,mlflow:5000,localhost,localhost:5000,127.0.0.1,127.0.0.1:5000,88.96.61.63,88.96.61.63:5000,rymfouzari.ddns.net,rymfouzari.ddns.net:5000"
+      --cors-allowed-origins "http://localhost:5000,http://127.0.0.1:5000,http://88.96.61.63:5000,http://rymfouzari.ddns.net:5000"
     ports:
       - "5000:5000"
     volumes:
