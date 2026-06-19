@@ -50,7 +50,7 @@ def task_send_predictions(**context) -> None:
 with DAG(
     dag_id="breast_daily_predictions",
     description="Envoie 20 predictions par jour a l'API pour simuler un trafic de production",
-    schedule="0 10 * * *",
+    schedule="0 */5 * * *",
     start_date=datetime(2026, 1, 1),
     catchup=False,
     default_args=default_args,
